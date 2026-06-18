@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viaje por el Ciclo Vital: Simulador Académico de Desarrollo Humano</title>
+    <!-- Tailwind CSS para diseño moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts para tipografías premium -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- FontAwesome para iconos limpios -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #FDFCF0; /* Color crema suave del manual */
+        }
+        h1, h2, h3, .serif-font {
+            font-family: 'Playfair Display', serif;
+        }
+        .color-navy { color: #002147; }
+        .bg-navy { background-color: #002147; }
+        .border-navy { border-color: #002147; }
+        .color-gold { color: #D4AF37; }
+        .bg-gold { background-color: #D4AF37; }
+        .border-gold { border-color: #D4AF37; }
+        
+        /* Efecto de rotación de flashcards */
+        .perspective {
+            perspective: 1000px;
+        }
+        .preserve-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+        .flipped {
+            transform: rotateY(180deg);
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-800">
+
+    <!-- HEADER GLOBAL -->
+    <header class="bg-navy text-white shadow-lg border-b-4 border-gold">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-gold p-2 rounded-lg text-navy text-2xl font-bold">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold tracking-wide">Viaje por el Ciclo Vital</h1>
+                    <p class="text-xs text-gold font-semibold uppercase tracking-widest">Simulador de Psicología del Desarrollo</p>
+                </div>
+            </div>
+            
+            <!-- Indicadores del Jugador -->
+            <div class="flex items-center gap-6 text-sm">
+                <div class="bg-slate-900/50 px-4 py-2 rounded-full border border-gold/30 flex items-center gap-2">
+                    <span class="text-xs text-slate-300">Nivel Académico:</span>
+                    <span id="player-title" class="font-bold text-gold">Estudiante de Pregrado</span>
+                </div>
+                <div class="flex items-center gap-2 bg-navy-light px-3 py-1.5 rounded-lg border border-slate-700">
+                    <i class="fa-solid fa-trophy text-gold"></i>
+                    <span class="font-bold" id="global-score">0 XP</span>
+                </div>
+                <div class="flex items-center gap-1.5" id="heart-container">
+                    <!-- Las vidas se renderizan de forma dinámica -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTAINER PRINCIPAL -->
+    <main class="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 flex flex-col justify-start">
+        
+        <!-- PANTALLA 1: MENÚ PRINCIPAL (HOME) -->
+        <div id="view-home" class="view-panel space-y-8 py-4">
+            <div class="bg-white rounded-2xl shadow-xl p-6 md:p-10 border border-slate-200/80 text-center relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-40 height-40 rounded-full bg-gold/5 blur-xl"></div>
+                <div class="absolute -bottom-10 -left-10 w-45 height-45 rounded-full bg-navy/5 blur-xl"></div>
+                
+                <h2 class="text-3xl md:text-5xl font-bold color-navy mb-4">¿Preparado para Convertirte en Especialista?</h2>
+                <p class="text-slate-600 max-w-2xl mx-auto mb-8 text-base md:text-lg">
+                    Domina todos los hitos biológicos, cognitivos y psicosociales desde la concepción hasta el envejecimiento avanzado. Resuelve dilemas diagnósticos y prepárate para tus exámenes de la forma más eficiente.
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Opción 1: Ruta del Ciclo Vital -->
+                    <button onclick="changeView('adventure')" class="group text-left p-6 rounded-xl border border-slate-200 bg-[#FDFCF0]/50 hover:bg-white hover:shadow-xl hover:border-gold transition-all duration-300">
+                        <div class="w-12 h-12 rounded-lg bg-navy text-gold flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-route"></i>
+                        </div>
+                        <h3 class="text-xl font-bold color-navy mb-2">Ruta de Aprendizaje</h3>
+                        <p class="text-xs text-slate-500 mb-3">7 Etapas de la Vida</p>
+                        <p class="text-sm text-slate-600">Desafía tu intelecto con preguntas de trivia académica de alta complejidad.</p>
+                    </button>
+
+                    <!-- Opción 2: Simulador Clínico -->
+                    <button onclick="startClinicalSimulation()" class="group text-left p-6 rounded-xl border border-slate-200 bg-[#FDFCF0]/50 hover:bg-white hover:shadow-xl hover:border-gold transition-all duration-300">
+                        <div class="w-12 h-12 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-user-doctor"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-emerald-800 mb-2">Consultorio de Casos</h3>
+                        <p class="text-xs text-emerald-600 mb-3">Casos Clínicos Reales</p>
+                        <p class="text-sm text-slate-600">Analiza el caso de Carlos, Mateo y Don Arturo para diagnosticar e intervenir con bases empíricas.</p>
+                    </button>
+
+                    <!-- Opción 3: Flashcards Spaced Repetition -->
+                    <button onclick="startFlashcards()" class="group text-left p-6 rounded-xl border border-slate-200 bg-[#FDFCF0]/50 hover:bg-white hover:shadow-xl hover:border-gold transition-all duration-300">
+                        <div class="w-12 h-12 rounded-lg bg-gold text-navy flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                        <h3 class="text-xl font-bold color-navy mb-2">Flashcards Activas</h3>
+                        <p class="text-xs text-amber-700 mb-3">Mazo de Estudio Veloz</p>
+                        <p class="text-sm text-slate-600">Memoriza clasificaciones, mnemotecnias clave y perlas de examen de manera rápida.</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabla de Progreso Académico -->
+            <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
+                <h3 class="text-xl font-bold color-navy mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-line text-gold"></i> Tu Hoja de Rendimiento Académico
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div class="p-4 bg-slate-50 rounded-lg">
+                        <p class="text-2xl font-bold color-navy" id="stat-questions-answered">0/21</p>
+                        <p class="text-xs text-slate-500 uppercase mt-1">Preguntas Completadas</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-lg">
+                        <p class="text-2xl font-bold text-emerald-700" id="stat-clinical-cases">0/3</p>
+                        <p class="text-xs text-slate-500 uppercase mt-1">Casos Resueltos</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-lg">
+                        <p class="text-2xl font-bold text-amber-600" id="stat-cards-learned">0</p>
+                        <p class="text-xs text-slate-500 uppercase mt-1">Conceptos Memorizados</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-lg">
+                        <p class="text-2xl font-bold text-indigo-700" id="stat-win-rate">0%</p>
+                        <p class="text-xs text-slate-500 uppercase mt-1">Precisión de Respuesta</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 2: MAPA DE LA RUTA DEL CICLO VITAL -->
+        <div id="view-adventure" class="view-panel hidden space-y-6 py-4">
+            <div class="flex items-center justify-between">
+                <button onclick="changeView('home')" class="text-navy hover:text-gold flex items-center gap-2 font-semibold">
+                    <i class="fa-solid fa-arrow-left"></i> Volver al Menú Principal
+                </button>
+                <span class="text-sm font-semibold color-navy bg-gold/20 px-3 py-1 rounded-full">Modo: Ruta del Ciclo Vital</span>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-xl p-6 border border-slate-200">
+                <h2 class="text-2xl font-bold color-navy mb-2 text-center">La Línea Temporal de la Existencia</h2>
+                <p class="text-sm text-slate-500 text-center mb-8">Completa cada etapa para avanzar. Consigue XP y mantén tus vidas a salvo.</p>
+                
+                <!-- Mapa Interactivo en Formato Línea Temporal Vertical/Horizontal -->
+                <div class="relative flex flex-col gap-6 md:gap-8 max-w-xl mx-auto py-4">
+                    <!-- Línea conectora -->
+                    <div class="absolute left-8 top-4 bottom-4 w-1 bg-slate-200 -z-0"></div>
+                    
+                    <!-- Etapa 1 -->
+                    <div class="flex items-start gap-4 relative z-10">
+                        <div id="node-1" class="w-16 h-16 rounded-full bg-navy text-gold border-4 border-white shadow-md flex items-center justify-center text-lg font-bold">1</div>
+                        <div class="flex-1 bg-[#FDFCF0]/80 p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
+                            <div class="flex justify-between items-center mb-1">
+                                <h3 class="font-bold text-navy">Etapa 1: Epistemología y Bases</h3>
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800">Básico</span>
+                            </div>
+                            <p class="text-xs text-slate-600 mb-3">Concepción integral, temperamento, carácter y bases epigenéticas del ciclo vital.</p>
+                            <button onclick="startStage(1)" class="bg-navy hover:bg-gold hover:text-navy text-white text-xs font-bold px-3 py-1.5 rounded transition-all">Iniciar Desafío</button>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 2 -->
+                    <div class="flex items-start gap-4 relative z-10">
+                        <div id="node-2" class="w-16 h-16 rounded-full bg-slate-300 text-slate-600 border-4 border-white shadow-md flex items-center justify-center text-lg font-bold">2</div>
+                        <div class="flex-1 bg-[#FDFCF0]/80 p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
+                            <div class="flex justify-between items-center mb-1">
+                                <h3 class="font-bold text-slate-700">Etapa 2: Desarrollo Prenatal y Parto</h3>
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800">Intermedio</span>
+                            </div>
+                            <p class="text-xs text-slate-600 mb-3">Trimestres gestacionales, teratología, ontogenia emocional y fisiología del parto.</p>
+                            <button id="btn-stage-2" onclick="startStage(2)" class="bg-navy hover:bg-gold hover:text-navy text-white text-xs font-bold px-3 py-1.5 rounded transition-all">Iniciar Desafío</button>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 3 -->
+                    <div class="flex items-start gap-4 relative z-10">
+                        <div id="node-3" class="w-16 h-16 rounded-full bg-slate-300 text-slate-600 border-4 border-white shadow-md flex items-center justify-center text-lg font-bold">3</div>
+                        <div class="flex-1 bg-[#FDFCF0]/80 p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
+                            <div class="flex justify-between items-center mb-1">
+                                <h3 class="font-bold text-slate-700">Etapa 3: Infancia Temprana (0-3 años)</h3>
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800">Intermedio</span>
+                            </div>
+                            <p class="text-xs text-slate-600 mb-3">Leyes biomecánicas, reflejos del neonato, etapa sensoriomotriz y adquisición del habla.</p>
+                            <button id="btn-stage-3" onclick="startStage(3)" class="bg-navy hover:bg-gold hover:text-navy text-white text-xs font-bold px-3 py-1.5 rounded transition-all">Iniciar Desafío</button>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 4 -->
+                    <div class="flex items-start gap-4 relative z-10">
+                        <div id="node-4" class="w-16 h-16 rounded-full bg-slate-300 text-slate-600 border-4 border-white shadow-md flex items-center justify-center text-lg font-bold">4</div>
+                        <div class="flex-1 bg-[#FDFCF0]/80 p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
+                            <div class="flex justify-between items-center mb-1">
+                                <h3 class="font-bold text-slate-700">Etapa 4: Infancia Intermedia (6-11 años)</h3>
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-rose-100 text-rose-800">Avanzado</span>
+                            </div>
+                            <p class="text-xs text-slate-600 mb-3">Operaciones concretas, moral heterónoma y autónoma, variables del acoso y bullying.</p>
+                            <button id="btn-stage-4" onclick="startStage(4)" class="bg-navy hover:bg-gold hover:text-navy text-white text-xs font-bold px-3 py-1.5 rounded transition-all">Iniciar Desafío</button>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 5 -->
+                    <div class="flex items-start gap-4 relative z-10">
+                        <div id="node-5" class="w-16 h-16 rounded-full bg-slate-300 text-slate-600 border-4 border-white shadow-md flex items-center justify-center text-lg font-bold">5</div>
+                        <div class="flex-1 bg-[#FDFCF0]/80 p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
+                            <div class="flex justify-between items-center mb-1">
+                                <h3 class="font-bold text-slate-700">Etapa 5: Juventud Tardía (21-29 años)</h3>
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800">Básico</span>
+                            </div>
+                            <p class="text-xs text-slate-600 mb-3">Acmé fisiológico de la salud, factores de estilo de vida, teoría relacional de Papalia.</p>
+                            <button id="btn-stage-5" onclick="startStage(5)" class="bg-navy hover:bg-gold hover:text-navy text-white text-xs font-bold px-3 py-1.5 rounded transition-all">Iniciar Desafío</button>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 6 -->
+                    <div class="flex items-start gap-4 relative z-10">
+                        <div id="node-6" class="w-16 h-16 rounded-full bg-slate-300 text-slate-600 border-4 border-white shadow-md flex items-center justify-center text-lg font-bold">6</div>
+                        <div class="flex-1 bg-[#FDFCF0]/80 p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
+                            <div class="flex justify-between items-center mb-1">
+                                <h3 class="font-bold text-slate-700">Etapa 6: Adultez Intermedia (40-65 años)</h3>
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-rose-100 text-rose-800">Avanzado</span>
+                            </div>
+                            <p class="text-xs text-slate-600 mb-3">Menopausia y andropausia, inteligencia fluida y cristalizada, generatividad de Erikson.</p>
+                            <button id="btn-stage-6" onclick="startStage(6)" class="bg-navy hover:bg-gold hover:text-navy text-white text-xs font-bold px-3 py-1.5 rounded transition-all">Iniciar Desafío</button>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 7 -->
+                    <div class="flex items-start gap-4 relative z-10">
+                        <div id="node-7" class="w-16 h-16 rounded-full bg-slate-300 text-slate-600 border-4 border-white shadow-md flex items-center justify-center text-lg font-bold">7</div>
+                        <div class="flex-1 bg-[#FDFCF0]/80 p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
+                            <div class="flex justify-between items-center mb-1">
+                                <h3 class="font-bold text-slate-700">Etapa 7: Adultez Tardía (65+ años)</h3>
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-rose-100 text-rose-800">Avanzado</span>
+                            </div>
+                            <p class="text-xs text-slate-600 mb-3">Senescencia biológica, Alzheimer y demencias, integridad del yo, y el modelo adaptativo SOC.</p>
+                            <button id="btn-stage-7" onclick="startStage(7)" class="bg-navy hover:bg-gold hover:text-navy text-white text-xs font-bold px-3 py-1.5 rounded transition-all">Iniciar Desafío</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 3: TABLERO DE PREGUNTAS (TRIVIA INTERACTIVA) -->
+        <div id="view-trivia" class="view-panel hidden space-y-6 py-4">
+            <div class="flex items-center justify-between">
+                <button onclick="changeView('adventure')" class="text-navy hover:text-gold flex items-center gap-2 font-semibold">
+                    <i class="fa-solid fa-arrow-left"></i> Volver a la Ruta
+                </button>
+                <div class="flex items-center gap-4">
+                    <span id="trivia-stage-indicator" class="text-xs font-bold uppercase tracking-wider bg-navy text-gold px-3 py-1 rounded">Etapa X</span>
+                    <span id="trivia-progress" class="text-sm font-semibold text-slate-500">Pregunta Y/Z</span>
+                </div>
+            </div>
+
+            <!-- Panel de Pregunta -->
+            <div class="bg-white rounded-xl shadow-xl p-6 md:p-8 border border-slate-200 relative">
+                <!-- Barra de Progreso Interna -->
+                <div class="w-full bg-slate-100 rounded-full h-2 mb-6">
+                    <div id="trivia-progress-bar" class="bg-gold h-2 rounded-full" style="width: 0%"></div>
+                </div>
+
+                <!-- Enunciado de Pregunta -->
+                <div class="mb-8">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Enunciado del Examen</span>
+                    <h3 id="trivia-question-text" class="text-xl md:text-2xl font-bold color-navy leading-relaxed">¿Cuál es el principio regulador...?</h3>
+                </div>
+
+                <!-- Opciones de Respuesta -->
+                <div id="trivia-options-container" class="grid grid-cols-1 gap-4 mb-8">
+                    <!-- Dinámico -->
+                </div>
+
+                <!-- Panel de Explicación Clínica (Oculto de inicio) -->
+                <div id="trivia-explanation-panel" class="hidden p-5 rounded-xl border border-slate-200 transition-all duration-300">
+                    <div class="flex items-start gap-3">
+                        <span id="explanation-icon" class="text-2xl mt-0.5"></span>
+                        <div class="flex-1">
+                            <h4 id="explanation-title" class="font-bold text-lg mb-1">¡Correcto!</h4>
+                            <p id="explanation-text" class="text-sm leading-relaxed text-slate-600">La justificación clínica es...</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button id="btn-next-question" onclick="nextQuestion()" class="bg-navy hover:bg-gold hover:text-navy text-white font-bold px-6 py-2 rounded-lg text-sm transition-all shadow-md">
+                            Siguiente Pregunta <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 4: SIMULADOR CLÍNICO (CONSULTORIO) -->
+        <div id="view-clinical" class="view-panel hidden space-y-6 py-4">
+            <div class="flex items-center justify-between">
+                <button onclick="changeView('home')" class="text-navy hover:text-gold flex items-center gap-2 font-semibold">
+                    <i class="fa-solid fa-arrow-left"></i> Volver al Menú
+                </button>
+                <span class="text-sm font-semibold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full"><i class="fa-solid fa-stethoscope"></i> Rotación Clínica Activa</span>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Columna Izquierda: Ficha del Paciente y Diálogo -->
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-xl border border-slate-200 flex flex-col h-[550px]">
+                    <!-- Cabecera de Ficha -->
+                    <div class="bg-emerald-800 text-white p-4 rounded-t-xl flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-user-injured"></i>
+                            </div>
+                            <div>
+                                <h3 id="patient-name" class="font-bold text-lg">Paciente: Carlos</h3>
+                                <p id="patient-age" class="text-xs text-slate-200">Edad: 45 años | Adultez Intermedia</p>
+                            </div>
+                        </div>
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded font-mono" id="simulation-step">Paso 1/4</span>
+                    </div>
+
+                    <!-- Área de Diálogo / Historia -->
+                    <div class="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50" id="dialogue-box">
+                        <!-- El texto del paciente se genera dinámicamente -->
+                    </div>
+
+                    <!-- Opciones de Decisión Clínica -->
+                    <div class="p-4 border-t border-slate-200 bg-white" id="clinical-choices-container">
+                        <p class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">¿Cuál es tu siguiente acción profesional?</p>
+                        <div class="grid grid-cols-1 gap-2" id="clinical-choices">
+                            <!-- Botones dinámicos -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha: Diagnóstico Diferencial e Indicadores de Éxito -->
+                <div class="space-y-6">
+                    <!-- Indicadores del terapeuta -->
+                    <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
+                        <h4 class="font-bold color-navy mb-4 text-sm uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-chart-bar text-emerald-600"></i> Métricas del Terapeuta
+                        </h4>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span>Precisión Diagnóstica</span>
+                                    <span id="metric-accuracy">50%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-2">
+                                    <div id="bar-accuracy" class="bg-emerald-600 h-2 rounded-full" style="width: 50%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span>Empatía y Rapport</span>
+                                    <span id="metric-rapport">50%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-2">
+                                    <div id="bar-rapport" class="bg-teal-500 h-2 rounded-full" style="width: 50%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Puntos Clave del Caso -->
+                    <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
+                        <h4 class="font-bold color-navy mb-3 text-sm uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-clipboard-list text-gold"></i> Datos Clínicos Detectados
+                        </h4>
+                        <ul id="clinical-findings" class="space-y-2 text-xs text-slate-600">
+                            <!-- Notas de diagnóstico -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 5: MAZO DE FLASHCARDS -->
+        <div id="view-flashcards" class="view-panel hidden space-y-6 py-4">
+            <div class="flex items-center justify-between">
+                <button onclick="changeView('home')" class="text-navy hover:text-gold flex items-center gap-2 font-semibold">
+                    <i class="fa-solid fa-arrow-left"></i> Volver al Menú
+                </button>
+                <span id="flashcard-counter" class="text-sm font-semibold color-navy bg-gold/20 px-3 py-1 rounded-full">Ficha 1 de 12</span>
+            </div>
+
+            <!-- Contenedor Flashcard -->
+            <div class="max-w-md mx-auto">
+                <div class="perspective w-full h-80 cursor-pointer" onclick="flipCard()">
+                    <div id="flashcard-inner" class="preserve-3d w-full h-full relative rounded-2xl shadow-2xl border border-slate-200">
+                        <!-- Lado Frontal -->
+                        <div class="absolute inset-0 bg-white rounded-2xl p-8 flex flex-col justify-between backface-hidden">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest" id="card-tag">Terminología Clave</span>
+                            <div class="flex-1 flex items-center justify-center text-center">
+                                <h3 id="card-question" class="text-2xl font-bold color-navy">¿Qué es la Epigenética?</h3>
+                            </div>
+                            <span class="text-xs text-gold text-center font-medium"><i class="fa-solid fa-rotate"></i> Clic en la tarjeta para voltear</span>
+                        </div>
+                        
+                        <!-- Lado Trasero -->
+                        <div class="absolute inset-0 bg-navy text-white rounded-2xl p-8 flex flex-col justify-between backface-hidden rotate-y-180 border border-gold">
+                            <span class="text-xs font-bold text-gold uppercase tracking-widest">Explicación Científica</span>
+                            <div class="flex-1 flex items-center justify-center text-center overflow-y-auto">
+                                <p id="card-answer" class="text-base leading-relaxed">Modificaciones en la expresión génica causadas por el entorno sin alterar la secuencia original de ADN...</p>
+                            </div>
+                            <span class="text-xs text-slate-300 text-center font-medium"><i class="fa-solid fa-rotate"></i> Clic para ver pregunta de nuevo</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de Autoevaluación -->
+                <div class="mt-8 flex justify-center gap-4">
+                    <button onclick="prevCard()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 p-3 rounded-full text-lg shadow">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <button onclick="markCardLearned()" class="bg-navy hover:bg-gold hover:text-navy text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 shadow-lg transition-all">
+                        <i class="fa-solid fa-check"></i> ¡Entendido! Guardar Progreso
+                    </button>
+                    <button onclick="nextCard()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 p-3 rounded-full text-lg shadow">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 6: RESULTADOS Y RETROALIMENTACIÓN -->
+        <div id="view-results" class="view-panel hidden space-y-8 py-4">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-12 border border-slate-200 text-center relative overflow-hidden">
+                <div class="w-24 h-24 rounded-full bg-gold/20 text-gold flex items-center justify-center text-5xl mx-auto mb-6">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                
+                <h2 class="text-3xl md:text-5xl font-bold color-navy mb-2">¡Felicitaciones Académicas!</h2>
+                <p class="text-slate-500 mb-8" id="result-subtitle">Has concluido tu evaluación del Ciclo Vital</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-2xl mx-auto mb-10">
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-500 uppercase tracking-wide">Puntaje Obtenido</span>
+                        <p class="text-3xl font-extrabold color-navy mt-1" id="result-score">1200 XP</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-500 uppercase tracking-wide">Precisión del Diagnóstico</span>
+                        <p class="text-3xl font-extrabold text-emerald-700 mt-1" id="result-accuracy">85%</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-500 uppercase tracking-wide">Grado Académico</span>
+                        <p class="text-lg font-bold text-amber-700 mt-2" id="result-rank">Especialista en Desarrollo</p>
+                    </div>
+                </div>
+
+                <div class="bg-[#FDFCF0] p-6 rounded-xl border border-slate-200 text-left max-w-xl mx-auto mb-8">
+                    <h4 class="font-bold color-navy mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-lightbulb text-gold"></i> Dictamen y Consejos de Estudio:
+                    </h4>
+                    <p id="result-feedback" class="text-sm text-slate-600 leading-relaxed">
+                        ¡Excelente desempeño! Demuestras un manejo preciso de las leyes de crecimiento psicomotor de Papalia y del conflicto de Erikson. Te sugerimos repasar la dosificación biológica de la andropausia frente a la menopausia para afinar el diagnóstico diferencial.
+                    </p>
+                </div>
+
+                <button onclick="resetGame()" class="bg-navy hover:bg-gold hover:text-navy text-white font-bold px-8 py-3 rounded-xl transition-all shadow-lg">
+                    Comenzar Nuevo Viaje del Ciclo Vital
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER GLOBAL -->
+    <footer class="bg-slate-900 text-slate-400 text-center py-6 text-xs border-t border-slate-800">
+        <p>© 2026 Viaje por el Ciclo Vital. Desarrollado con rigurosidad científica basándose en Papalia, Harrison y Erikson.</p>
+        <p class="mt-1 text-slate-600">Creado para el Aprendizaje Activo e Integrador en Educación Superior.</p>
+    </footer>
+
+    <!-- LOGIC DEL JUEGO (JAVASCRIPT) -->
+    <script>
+        // --- 1. BASE DE DATOS DE PREGUNTAS (TRIVIA AVANZADA) ---
+        const questionDatabase = {
+            1: [ // Bases Conceptuales
+                {
+                    question: "¿Qué constructo de la identidad describe la reacción biológica heredada vinculada al SNC y al sistema endocrino, detectable desde los primeros meses?",
+                    options: ["Personalidad", "Carácter", "Temperamento", "Estructura Cognitiva"],
+                    answerIndex: 2,
+                    explanation: "El temperamento representa el sustrato biológico innato de la reactividad emocional, a diferencia del carácter (aprendido) y la personalidad (integración de ambos)."
+                },
+                {
+                    question: "¿Qué concepto describe los cambios en la expresión génica causados por el entorno sin alterar la secuencia subyacente de ADN?",
+                    options: ["Heredabilidad", "Genotipo mendeliano", "Epigenética", "Maduración autónoma"],
+                    answerIndex: 2,
+                    explanation: "La epigenética es el puente biológico directo entre el entorno y la biología humana, modificando cómo los genes son expresados."
+                },
+                {
+                    question: "Si analizamos al ser humano bajo el enfoque filosófico, ¿cuáles son sus premisas centrales?",
+                    options: [
+                        "La estructura adaptativa frente a estímulos neurofisiológicos externos.",
+                        "La entidad dotada de racionalidad, libre albedrío, ética y autoconciencia.",
+                        "La conexión de alma trascendental con una divinidad omnipotente.",
+                        "Un organismo puramente biológico integrado en la evolución animal."
+                    ],
+                    answerIndex: 1,
+                    explanation: "El enfoque filosófico define al sujeto por su racionalidad, autoconciencia y capacidad de autodeterminarse de manera ética."
+                }
+            ],
+            2: [ // Desarrollo Prenatal
+                {
+                    question: "¿En qué etapa del primer trimestre se inicia la organogénesis de las tres capas primarias (ectodermo, mesodermo y endodermo)?",
+                    options: ["Etapa Fetal Tardía (semanas 9-12)", "Etapa Germinal (semanas 1-2)", "Etapa Embrionaria (semanas 3-8)", "Etapa Perinatal (semanas 13-16)"],
+                    answerIndex: 2,
+                    explanation: "Durante la etapa embrionaria (semanas 3-8) ocurre la formación crítica de órganos principales y diferenciación celular."
+                },
+                {
+                    question: "¿Cuál es el primer sentido que emerge en la ontogenia fetal humana intrauterina?",
+                    options: ["Vía Auditiva", "Sentido del Tacto", "Vía Visual", "Procesamiento Olfativo"],
+                    answerIndex: 1,
+                    explanation: "El tacto es el primer sentido en emerger evolutivamente, seguido por el gusto y olfato al deglutir líquido amniótico."
+                },
+                {
+                    question: "La liberación prolongada de cortisol materno por estrés crónico atraviesa la placenta y altera principalmente:",
+                    options: ["El cierre epifisario óseo fetal", "El eje hipotálamo-hipófisis-adrenal (HHA)", "La diferenciación sexual fenotípica", "Los reflejos primitivos de succión"],
+                    answerIndex: 1,
+                    explanation: "El estrés materno eleva el cortisol y las catecolaminas, alterando el eje HHA fetal y asociándose con bajo peso y reactividad posnatal."
+                }
+            ],
+            3: [ // Infancia Temprana
+                {
+                    question: "Un lactante logra el sostén cefálico y control de tronco antes de lograr la marcha voluntaria. ¿Qué ley biomecánica de Papalia describe esto?",
+                    options: ["Principio Proximodistal", "Principio de Diferenciación", "Principio Cefalocaudal", "Principio de Crecimiento Acelerado"],
+                    answerIndex: 2,
+                    explanation: "El principio cefalocaudal establece que el crecimiento y control motriz progresa de la cabeza hacia las extremidades inferiores."
+                },
+                {
+                    question: "¿Qué hito cognitivo de la etapa sensoriomotriz describe comprender que los objetos existen aun fuera de la vista?",
+                    options: ["Conservación", "Permanencia del Objeto", "Reacción Circular Primaria", "Función Simbólica"],
+                    answerIndex: 1,
+                    explanation: "La permanencia del objeto se desarrolla paulatinamente y culmina alrededor de los 18-24 meses de edad."
+                },
+                {
+                    question: "¿Cuál de las siguientes es una 'holofrase' típica del desarrollo lingüístico temprano?",
+                    options: [
+                        "Doble silabeo como 'ba-ba-ba'.",
+                        "Uso de un fonema único con intención semántica completa (ej: 'ba' para decir 'quiero salir').",
+                        "Sintaxis rudimentaria de tipo telegráfico como 'más leche'.",
+                        "Uso estructurado de oraciones subordinadas."
+                    ],
+                    answerIndex: 1,
+                    explanation: "La holofrase es el uso de una palabra o fonema único para representar una idea completa."
+                }
+            ],
+            4: [ // Infancia Intermedia
+                {
+                    question: "¿En qué consiste la 'descentración cognitiva' que disminuye el egocentrismo en la etapa de operaciones concretas?",
+                    options: [
+                        "La habilidad de ordenar elementos según dimensiones crecientes.",
+                        "La capacidad de enfocar múltiples variables de un problema simultáneamente.",
+                        "Interpretar que las normas sociales son sagradas e inmutables.",
+                        "Sustituir roles profesionales perdidos por actividades lúdicas."
+                    ],
+                    answerIndex: 1,
+                    explanation: "La descentración cognitiva permite considerar múltiples aspectos de una situación y comprender la perspectiva de otros."
+                },
+                {
+                    question: "Según Kohlberg y Piaget, ¿cómo valora la gravedad de un acto un niño en la etapa moral 'heterónoma'?",
+                    options: [
+                        "Basado puramente en la intención de la persona que lo realiza.",
+                        "Por el acuerdo de equidad mutua establecido con el grupo.",
+                        "Únicamente por el daño material resultante o la consecuencia de castigo físico directo.",
+                        "Por principios universales éticos y abstractos de justicia."
+                    ],
+                    answerIndex: 2,
+                    explanation: "En la moralidad heterónoma se valora el daño físico o las consecuencias materiales sobre la intencionalidad."
+                },
+                {
+                    question: "¿Cuál es una consecuencia de sintomatología 'internante' asociada al acoso escolar (bullying)?",
+                    options: ["Bajo rendimiento con hiperactividad motora", "Agresiones físicas reactivas hacia terceros", "Ansiedad generalizada, somatización e ideación suicida", "Ausencia de vinculación de apego seguro"],
+                    answerIndex: 2,
+                    explanation: "El bullying se correlaciona con depresión, trastornos somáticos y ansiedad como manifestaciones internas de distrés."
+                }
+            ],
+            5: [ // Juventud Tardía
+                {
+                    question: "Durante la juventud tardía (21-29 años), ¿cuál de los siguientes enunciados define mejor el estado de salud física?",
+                    options: [
+                        "Inicio acelerado del envejecimiento primario y sarcopenia severa.",
+                        "Acmé del rendimiento fisiológico, máxima capacidad de reserva y homeostasis estable.",
+                        "Declive del 1% anual en hormonas sexuales reproductivas.",
+                        "Transición del pensamiento postformal hacia operaciones concretas."
+                    ],
+                    answerIndex: 1,
+                    explanation: "A los 21-29 años se alcanza el cenit fisiológico y la máxima efectividad de los sistemas orgánicos corporales."
+                },
+                {
+                    question: "¿Cómo valora Papalia la condición de la soltería durante la adultez joven?",
+                    options: [
+                        "Un signo evidente de aislamiento patológico según la teoría del desarrollo.",
+                        "Un fracaso relacional debido al fracaso de resolver el conflicto de Erikson.",
+                        "Una opción legítima que fomenta la autonomía, desarrollo personal e intereses de vida sin implicar aislamiento.",
+                        "Un estadio transitorio obligatorio antes del matrimonio."
+                    ],
+                    answerIndex: 2,
+                    explanation: "La investigación contemporánea y Papalia afirman que la soltería es una elección sana orientada al desarrollo e independencia."
+                },
+                {
+                    question: "Al formar una nueva familia conyugal estable, ¿qué variable es el predictor clave del bienestar biopsicosocial según Papalia?",
+                    options: [
+                        "La estructura heterosexual convencional de la pareja.",
+                        "La solidez del matrimonio civil legal frente a la unión libre.",
+                        "La calidad de la relación, la comunicación activa y el soporte mutuo, independientemente de la orientación sexual.",
+                        "La cantidad de hijos nacidos dentro del primer quinquenio."
+                    ],
+                    answerIndex: 2,
+                    explanation: "La calidad intrínseca del vínculo y la salud emocional de los integrantes son los verdaderos predictores del éxito relacional."
+                }
+            ],
+            6: [ // Adultez Intermedia
+                {
+                    question: "Defina clínicamente el cese menstrual conocido como menopausia fisiológica:",
+                    options: [
+                        "Caída progresiva de testosterona plasmática libre acompañada de bochornos.",
+                        "Ausencia de menstruación por 6 meses seguidos con atrofia ósea severa.",
+                        "Amenorrea retrospectiva diagnosticada tras 12 meses consecutivos sin menstruación por pérdida folicular.",
+                        "Fluctuación errática de estrógenos en la transición de la perimenopausia."
+                    ],
+                    answerIndex: 2,
+                    explanation: "Se requiere de un año completo de amenorrea secundaria para dar el diagnóstico definitivo de menopausia."
+                },
+                {
+                    question: "El declive sutil en la resolución de problemas lógicos nuevos y la velocidad de procesamiento perceptivo se asocia a:",
+                    options: ["Inteligencia Cristalizada", "Inteligencia Fluida", "Sabiduría Pragmática", "Deterioro Cognitivo Leve"],
+                    answerIndex: 1,
+                    explanation: "La inteligencia fluida (dependiente del sustrato cerebral) empieza a declinar lentamente a partir de esta etapa."
+                },
+                {
+                    question: "¿Qué conflicto psicosocial define a la adultez intermedia según la teoría de Erik Erikson?",
+                    options: ["Intimidad frente a Aislamiento", "Generatividad frente a Estancamiento", "Integridad frente a Desesperación", "Identidad frente a Confusión"],
+                    answerIndex: 1,
+                    explanation: "La crisis radica en guiar y trascender educando a las siguientes generaciones (generatividad) frente al estancamiento personal."
+                }
+            ],
+            7: [ // Adultez Tardía
+                {
+                    question: "La pérdida progresiva de la masa muscular y fuerza esquelética asociada al envejecimiento se denomina clínicamente:",
+                    options: ["Osteopenia senil", "Miopatía periférica", "Sarcopenia", "Bradipsiquia motora"],
+                    answerIndex: 2,
+                    explanation: "La sarcopenia senil es el declive y atrofia fibrilar muscular característico del adulto mayor."
+                },
+                {
+                    question: "¿Qué proteínas patológicas se asocian en el cerebro con el desarrollo de la Enfermedad de Alzheimer?",
+                    options: [
+                        "Alfa-sinucleína en los cuerpos de Lewy.",
+                        "Beta-amiloide extracelular y proteína tau hiperfosforilada intracelular.",
+                        "Proteína C reactiva y dopamina disminuida cortical.",
+                        "Glutamato y mielina deteriorada axonal."
+                    ],
+                    answerIndex: 1,
+                    explanation: "La acumulación de placas de beta-amiloide y ovillos neurofibrilares de tau son marcadores fisiopatológicos del Alzheimer."
+                },
+                {
+                    question: "¿Qué modelo adaptativo de Baltes postula la reducción voluntaria de metas (Selección) optimizando recursos y usando Compensación?",
+                    options: ["Teoría de la Continuidad", "Optimización Selectiva con Compensación (SOC)", "Teoría de la Actividad Havighurst", "Teoría del Retiro Mutuo"],
+                    answerIndex: 1,
+                    explanation: "El modelo SOC explica la resiliencia y el mantenimiento del éxito conductual en la vejez al compensar pérdidas biológicas."
+                }
+            ]
+        };
+
+        // --- 2. BASE DE DATOS DE CASOS CLÍNICOS (SIMULADOR) ---
+        const clinicalCases = [
+            {
+                patient: "Carlos",
+                age: "45 años",
+                etapa: "Adultez Intermedia",
+                steps: [
+                    {
+                        text: "Carlos ingresa a tu consultorio. Se ve cansado. Dice: 'Últimamente me despierto de madrugada dándole vueltas a mi vida... Llevo 20 años en la misma empresa y me siento estancado. Además, mi papá enfermó crónicamente y tengo que cuidarlo a él y a mis hijos que están en plena adolescencia'.",
+                        choices: [
+                            {
+                                text: "Hacer un diagnóstico de crisis vocacional y sugerirle que cambie de empleo urgentemente.",
+                                scoreDiff: -10,
+                                rapportDiff: -10,
+                                response: "Carlos suspira con frustración: '¡No puedo simplemente renunciar! Tengo una familia que depende de mí económicamente. Se siente muy irresponsable'."
+                            },
+                            {
+                                text: "Validar su experiencia, explicarle el fenómeno de la 'Generación Sándwich' y el conflicto de Generatividad vs. Estancamiento.",
+                                scoreDiff: 30,
+                                rapportDiff: 25,
+                                response: "Carlos se asombra y asiente: '¡Exacto! Me siento en un emparedado. No sabía que era un fenómeno estudiado, me quita peso saber que es una crisis normativa de esta edad'."
+                            }
+                        ],
+                        findings: "Presenta el síndrome psicosocial de la Generación Sándwich (cuidado simultáneo de progenitores e hijos)."
+                    },
+                    {
+                        text: "Carlos agrega: 'Físicamente ya no soy el mismo. He notado pérdida de masa muscular y una leve grasa abdominal. También me preocupa mi rendimiento sexual, las erecciones no son tan rápidas y temo que sea andropausia'.",
+                        choices: [
+                            {
+                                text: "Indicarle que a su edad la disfunción eréctil es irreversible debido a la andropausia abrupta.",
+                                scoreDiff: -15,
+                                rapportDiff: -20,
+                                response: "Carlos palidece y se desanima visiblemente. Has dañado el rapport al darle un dato fisiológicamente incorrecto."
+                            },
+                            {
+                                text: "Psicoeducar sobre el descenso gradual de testosterona (1% anual), descartar la andropausia abrupta y motivar hábitos saludables y mejor comunicación en pareja.",
+                                scoreDiff: 30,
+                                rapportDiff: 20,
+                                response: "Carlos se tranquiliza: 'Qué alivio. Pensé que era el fin de mi vida íntima. Me motiva a cambiar mi dieta y hacer pesas'."
+                            }
+                        ],
+                        findings: "Dudas sobre cambios hormonales normativos masculinos. Buena respuesta a psicoeducación endocrina."
+                    },
+                    {
+                        text: "Para cerrar la sesión, ¿cuál es tu propuesta de intervención clínica integral basada en evidencia?",
+                        choices: [
+                            {
+                                text: "Terapia de corte existencial y cognitivo-conductual, higiene del sueño y técnicas de delegación para evitar el burnout del cuidador.",
+                                scoreDiff: 40,
+                                rapportDiff: 20,
+                                response: "Carlos acepta agradecido: 'Me parece un plan excelente. Necesito ordenar mi mente, dormir mejor y aprender a pedir ayuda en el cuidado de papá'."
+                            },
+                            {
+                                text: "Indicar ansiolíticos de venta libre sin seguimiento y derivar directamente a un centro gerontológico para internar a su padre.",
+                                scoreDiff: -20,
+                                rapportDiff: -10,
+                                response: "Carlos responde molesto: 'No quiero deshacerme de mi padre de esa forma ni automedicarme. Buscaba otra clase de apoyo'."
+                            }
+                        ],
+                        findings: "Plan de intervención integral (PCC + Logoterapia + Prevención de Burnout del Cuidador) establecido con éxito."
+                    }
+                ]
+            },
+            {
+                patient: "Mateo (Lactante)",
+                age: "9 meses",
+                etapa: "Infancia Temprana",
+                steps: [
+                    {
+                        text: "Sofía, madre primeriza, te trae a consulta a su bebé Mateo de 9 meses. Dice: 'Doctor/a, estoy muy angustiada. Mateo no gatea con soltura y cuando quiere agarrar su sonajero pequeño usa toda su manita en lugar de los dedos. ¿Tiene un retraso de psicomotricidad fina?'.",
+                        choices: [
+                            {
+                                text: "Darle la razón a la madre, alertar de un retraso neurobiológico grave y derivar a neuropediatría de urgencia.",
+                                scoreDiff: -15,
+                                rapportDiff: -20,
+                                response: "Sofía comienza a llorar desconsoladamente. Has generado un pánico innecesario omitiendo las leyes normales del desarrollo."
+                            },
+                            {
+                                text: "Tranquilizar a la madre y explicarle que el control motor grueso y proximal precede fisiológicamente a la pinza digital fina (Leyes proximodistal y de diferenciación).",
+                                scoreDiff: 30,
+                                rapportDiff: 25,
+                                response: "Sofía se limpia las lágrimas: '¡Ah! O sea que primero debe controlar bien los músculos de su brazo y mano antes de la coordinación de sus dedos índice y pulgar'."
+                            }
+                        ],
+                        findings: "Evaluación de motricidad bajo la ley proximodistal de Papalia."
+                    },
+                    {
+                        text: "Sofía pregunta ahora sobre estimulación cognitiva: 'A veces le tapo su peluche favorito con una manta y Mateo deja de buscarlo por completo. ¿Piensa que desapareció del universo?'.",
+                        choices: [
+                            {
+                                text: "Explicar que Mateo se encuentra en la etapa sensoriomotriz y está consolidando el hito de 'Permanencia del Objeto'. Sugerir juegos de ocultar y descubrir.",
+                                scoreDiff: 30,
+                                rapportDiff: 20,
+                                response: "Sofía sonríe: '¡Es fascinante! Pensé que era distraído, pero veo que está ejercitando su mente. Jugaremos a las escondidas con sus juguetes'."
+                            },
+                            {
+                                text: "Decirle que es una señal de déficit de atención temprana y prohibir ocultar objetos.",
+                                scoreDiff: -20,
+                                rapportDiff: -10,
+                                response: "Sofía se confunde: 'Pero si es un bebé, ¿déficit de atención a los 9 meses?'."
+                            }
+                        ],
+                        findings: "Identificación de la Permanencia del Objeto en el Subestadio 4 Sensoriomotriz."
+                    }
+                ]
+            },
+            {
+                patient: "Don Arturo",
+                age: "78 años",
+                etapa: "Adultez Tardía",
+                steps: [
+                    {
+                        text: "Don Arturo asiste acompañado de su hija. Su hija refiere: 'Papá está teniendo olvidos. A veces olvida dónde guardó las gafas de lectura o el nombre de una calle. Sin embargo, en el pueblo todos acuden a él para resolver problemas del vecindario porque da consejos muy sabios. ¿Es el inicio del Alzheimer?'.",
+                        choices: [
+                            {
+                                text: "Diagnosticar Alzheimer de inmediato y prescribir tratamiento farmacológico invasivo.",
+                                scoreDiff: -20,
+                                rapportDiff: -15,
+                                response: "Don Arturo se muestra ofendido: '¡No estoy loco, joven! Todavía sé perfectamente quién soy'."
+                            },
+                            {
+                                text: "Distinguir los cambios normativos (lentitud de procesamiento, olvidos benignos de memoria de trabajo) de los trastornos demenciales. Resaltar que la sabiduría e inteligencia cristalizada se mantienen en auge.",
+                                scoreDiff: 30,
+                                rapportDiff: 25,
+                                response: "Don Arturo sonríe y asiente con dignidad: 'Exacto. Me toma más tiempo recordar un nombre, pero sé guiar muy bien a los muchachos de la colonia'."
+                            }
+                        ],
+                        findings: "Diferenciación exitosa entre envejecimiento normativo cognitivo y demencias corticales."
+                    },
+                    {
+                        text: "Don Arturo te confiesa con melancolía: 'A veces me siento inútil desde que me jubilé, y con la pérdida de mis viejos amigos temo mucho a la muerte'.",
+                        choices: [
+                            {
+                                text: "Explicar la crisis de Integridad vs. Desesperación de Erikson. Ayudarle a hacer una mirada retrospectiva positiva y sugerirle usar el modelo SOC (Optimización Selectiva con Compensación).",
+                                scoreDiff: 35,
+                                rapportDiff: 25,
+                                response: "Don Arturo se conmueve: 'Es verdad, he tenido una buena vida, saqué adelante a mis hijos. Quiero seleccionar las actividades que aún puedo hacer bien'."
+                            },
+                            {
+                                text: "Sugerirle que no piense en eso y que se resigne a que la jubilación significa descanso absoluto en cama.",
+                                scoreDiff: -15,
+                                rapportDiff: -10,
+                                response: "Don Arturo se desanima: 'El sedentarismo me va a matar más rápido que la edad'."
+                            }
+                        ],
+                        findings: "Aplicación clínica del modelo SOC y resolución psicosocial de la vejez."
+                    }
+                ]
+            }
+        ];
+
+        // --- 3. BASE DE DATOS DE FLASHCARDS ---
+        const flashcardsDataset = [
+            { tag: "Bases", question: "¿Qué es la Epigenética?", answer: "Modificaciones químicas en la expresión de los genes provocadas por factores ambientales (estrés, dieta) sin alterar la secuencia original de nucleótidos del ADN." },
+            { tag: "Bases", question: "Temperamento vs. Carácter", answer: "El temperamento es la base biológica heredada emocionalmente reactiva (SNC). El carácter es la estructura aprendida a través de la educación y cultura." },
+            { tag: "Prenatal", question: "Periodo Crítico de Teratógenos", answer: "El primer trimestre (etapa embrionaria, semanas 3-8) debido al proceso de organogénesis acelerada donde se diferencian las capas celulares." },
+            { tag: "Prenatal", question: "Parto Natural vs. Cesárea", answer: "El parto natural es vaginal con fases de dilatación, expulsión y alumbramiento. La cesárea es cirugía abdominal y uterina ante riesgos médicos absolutos." },
+            { tag: "Infancia Temprana", question: "Ley Cefalocaudal", answer: "Mnemotecnia: Cabeza a Pies. El control motriz se adquiere de arriba hacia abajo (sostén cefálico antes de la bipedestación)." },
+            { tag: "Infancia Temprana", question: "Mnemotecnia CE-PRO-DI", answer: "Leyes físicas: CEfalocaudal, PROximodistal y DIferenciación (respuestas masivas que se especializan con la maduración)." },
+            { tag: "Infancia Intermedia", question: "Operaciones Concretas (Piaget)", answer: "Pensamiento lógico aplicado a realidades tangibles. Dominio de la Conservación, Clasificación categorial y Seriación de escalas." },
+            { tag: "Infancia Intermedia", question: "Bullying y Salud Escolar", answer: "Acoso escolar reiterado con asimetría de poder. Genera sintomatología internante: ansiedad, somatizaciones depresivas e ideación suicida." },
+            { tag: "Adultez Intermedia", question: "Generación Sándwich", answer: "Adultos de 40-65 años con sobrecarga crónica de rol al proveer simultáneamente cuidado a padres ancianos dependientes e hijos adolescentes." },
+            { tag: "Adultez Intermedia", question: "Inteligencia Fluida vs. Cristalizada", answer: "La fluida (procesamiento rápido, abstracto) declina lentamente por envejecimiento cerebral. La cristalizada (experiencia, vocabulario) se mantiene estable o mejora." },
+            { tag: "Adultez Tardía", question: "Modelo S.O.C. (Baltes)", answer: "Selección (limitar metas), Optimización (maximizar recursos) y Compensación (usar prótesis o estrategias ante la pérdida) para envejecer con éxito." },
+            { tag: "Adultez Tardía", question: "Alzheimer vs. Normalidad", answer: "La normalidad tiene olvidos de trabajo por enlentecimiento. El Alzheimer es neurodegenerativo (beta-amiloide/tau) con afasia, apraxia y pérdida funcional." }
+        ];
+
+        // --- 4. ESTADO DE LA APLICACIÓN (STATE) ---
+        let state = {
+            currentView: 'home',
+            score: 0,
+            lives: 3,
+            completedStages: [1], // Etapa 1 desbloqueada por defecto
+            activeStage: null,
+            activeQuestionIndex: 0,
+            statQuestionsAnswered: 0,
+            statClinicalCasesSolved: 0,
+            statCardsLearned: 0,
+            correctAnswersCount: 0,
+            totalAnswersCount: 0,
+            
+            // Estado del simulador clínico
+            activeCaseIndex: 0,
+            activeCaseStep: 0,
+            clinicalAccuracy: 50,
+            clinicalRapport: 50,
+            clinicalFindings: [],
+
+            // Estado de flashcards
+            activeCardIndex: 0,
+            isCardFlipped: false
+        };
+
+        // --- 5. ENRUTADOR DE VISTAS (SPA CONTROLLER) ---
+        function changeView(viewId) {
+            document.querySelectorAll('.view-panel').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            state.currentView = viewId;
+            
+            // Render de componentes globales según vista
+            updateScoreUI();
+            updateHeartsUI();
+            updateStatsUI();
+
+            if (viewId === 'adventure') {
+                renderAdventureMap();
+            }
+        }
+
+        // --- 6. GESTIÓN DE PUNTUACIONES Y VIDAS ---
+        function addXP(amount) {
+            state.score += amount;
+            updateScoreUI();
+            updatePlayerTitle();
+        }
+
+        function loseLife() {
+            state.lives = Math.max(0, state.lives - 1);
+            updateHeartsUI();
+            if (state.lives === 0) {
+                showGameOver();
+            }
+        }
+
+        function updateScoreUI() {
+            document.getElementById('global-score').innerText = `${state.score} XP`;
+        }
+
+        function updateHeartsUI() {
+            const container = document.getElementById('heart-container');
+            container.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                const heart = document.createElement('i');
+                heart.className = i < state.lives ? 'fa-solid fa-heart text-rose-500 text-lg' : 'fa-regular fa-heart text-slate-400 text-lg';
+                container.appendChild(heart);
+            }
+        }
+
+        function updatePlayerTitle() {
+            let title = "Estudiante de Pregrado";
+            if (state.score >= 300) title = "Ayudante de Cátedra";
+            if (state.score >= 600) title = "Interno de Psicología";
+            if (state.score >= 1000) title = "Residente Clínico";
+            if (state.score >= 1500) title = "Especialista del Ciclo Vital";
+            
+            document.getElementById('player-title').innerText = title;
+        }
+
+        function updateStatsUI() {
+            document.getElementById('stat-questions-answered').innerText = `${state.statQuestionsAnswered}/21`;
+            document.getElementById('stat-clinical-cases').innerText = `${state.statClinicalCasesSolved}/3`;
+            document.getElementById('stat-cards-learned').innerText = state.statCardsLearned;
+            
+            let winRate = state.totalAnswersCount > 0 ? Math.round((state.correctAnswersCount / state.totalAnswersCount) * 100) : 0;
+            document.getElementById('stat-win-rate').innerText = `${winRate}%`;
+        }
+
+        // --- 7. MÓDULO RUTA DEL CICLO VITAL (TRIVIA) ---
+        function renderAdventureMap() {
+            for (let i = 1; i <= 7; i++) {
+                const node = document.getElementById(`node-${i}`);
+                const btn = document.getElementById(`btn-stage-${i}`);
+                
+                if (state.completedStages.includes(i)) {
+                    node.className = "w-16 h-16 rounded-full bg-navy text-gold border-4 border-gold shadow-md flex items-center justify-center text-lg font-bold";
+                    if (btn) btn.disabled = false;
+                } else {
+                    node.className = "w-16 h-16 rounded-full bg-slate-200 text-slate-400 border-4 border-white shadow-md flex items-center justify-center text-lg font-bold";
+                    if (btn) btn.disabled = true;
+                }
+            }
+        }
+
+        function startStage(stageNum) {
+            state.activeStage = stageNum;
+            state.activeQuestionIndex = 0;
+            changeView('trivia');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const stageQs = questionDatabase[state.activeStage];
+            const currentQ = stageQs[state.activeQuestionIndex];
+            
+            document.getElementById('trivia-stage-indicator').innerText = `Etapa ${state.activeStage}`;
+            document.getElementById('trivia-progress').innerText = `Pregunta ${state.activeQuestionIndex + 1}/${stageQs.length}`;
+            
+            const progressPct = ((state.activeQuestionIndex) / stageQs.length) * 100;
+            document.getElementById('trivia-progress-bar').style.width = `${progressPct}%`;
+            
+            document.getElementById('trivia-question-text').innerText = currentQ.question;
+            
+            const container = document.getElementById('trivia-options-container');
+            container.innerHTML = '';
+            
+            currentQ.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = "text-left p-4 rounded-xl border border-slate-200 hover:border-navy hover:bg-slate-50 transition-all font-medium text-slate-700 bg-white flex items-center gap-3";
+                btn.innerHTML = `<span class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-sm color-navy group-hover:bg-gold">${String.fromCharCode(65 + index)}</span> <span>${option}</span>`;
+                btn.onclick = () => selectOption(index);
+                container.appendChild(btn);
+            });
+
+            // Resetear explicación
+            document.getElementById('trivia-explanation-panel').classList.add('hidden');
+        }
+
+        function selectOption(selectedIndex) {
+            const stageQs = questionDatabase[state.activeStage];
+            const currentQ = stageQs[state.activeQuestionIndex];
+            const optionsBtns = document.getElementById('trivia-options-container').children;
+            
+            // Bloquear interacción extra
+            for (let btn of optionsBtns) {
+                btn.disabled = true;
+            }
+
+            state.totalAnswersCount++;
+            state.statQuestionsAnswered++;
+
+            const explPanel = document.getElementById('trivia-explanation-panel');
+            const explIcon = document.getElementById('explanation-icon');
+            const explTitle = document.getElementById('explanation-title');
+            const explText = document.getElementById('explanation-text');
+            
+            explPanel.classList.remove('hidden');
+
+            if (selectedIndex === currentQ.answerIndex) {
+                // Correcto
+                state.correctAnswersCount++;
+                addXP(50);
+                optionsBtns[selectedIndex].className = "text-left p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 font-medium text-emerald-900 flex items-center gap-3";
+                explIcon.innerHTML = "🎉";
+                explTitle.innerText = "¡Excelente Respuesta!";
+                explTitle.className = "font-bold text-lg text-emerald-800 mb-1";
+            } else {
+                // Incorrecto
+                loseLife();
+                optionsBtns[selectedIndex].className = "text-left p-4 rounded-xl border-2 border-rose-500 bg-rose-50/50 font-medium text-rose-900 flex items-center gap-3";
+                optionsBtns[currentQ.answerIndex].className = "text-left p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 font-medium text-emerald-900 flex items-center gap-3";
+                explIcon.innerHTML = "❌";
+                explTitle.innerText = "Respuesta Incorrecta";
+                explTitle.className = "font-bold text-lg text-rose-800 mb-1";
+            }
+
+            explText.innerText = currentQ.explanation;
+            updateStatsUI();
+        }
+
+        function nextQuestion() {
+            const stageQs = questionDatabase[state.activeStage];
+            state.activeQuestionIndex++;
+
+            if (state.activeQuestionIndex < stageQs.length) {
+                loadQuestion();
+            } else {
+                // Fin de Etapa con Éxito
+                addXP(100);
+                // Desbloquear la siguiente etapa
+                const nextStage = state.activeStage + 1;
+                if (nextStage <= 7 && !state.completedStages.includes(nextStage)) {
+                    state.completedStages.push(nextStage);
+                }
+                
+                if (state.activeStage === 7) {
+                    showFinalResults();
+                } else {
+                    changeView('adventure');
+                }
+            }
+        }
+
+        // --- 8. MÓDULO SIMULADOR CLÍNICO ---
+        function startClinicalSimulation() {
+            state.activeCaseIndex = 0;
+            state.activeCaseStep = 0;
+            state.clinicalAccuracy = 50;
+            state.clinicalRapport = 50;
+            state.clinicalFindings = [];
+            changeView('clinical');
+            loadClinicalStep();
+        }
+
+        function loadClinicalStep() {
+            const activeCase = clinicalCases[state.activeCaseIndex];
+            const currentStep = activeCase.steps[state.activeCaseStep];
+            
+            document.getElementById('patient-name').innerText = `Paciente: ${activeCase.patient}`;
+            document.getElementById('patient-age').innerText = `Edad: ${activeCase.age} | ${activeCase.etapa}`;
+            document.getElementById('simulation-step').innerText = `Paso ${state.activeCaseStep + 1}/${activeCase.steps.length}`;
+            
+            // Setear Métricas Visuales
+            updateClinicalMetrics();
+
+            // Setear Diálogo del paciente
+            const dialogBox = document.getElementById('dialogue-box');
+            dialogBox.innerHTML = `
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-full bg-navy text-gold flex items-center justify-center font-bold text-xs">P</div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 text-sm max-w-[85%] shadow-sm">
+                        <p class="font-bold text-xs text-slate-400 uppercase tracking-widest mb-1">${activeCase.patient}</p>
+                        <p class="text-slate-700">${currentStep.text}</p>
+                    </div>
+                </div>
+            `;
+
+            // Setear Hallazgos
+            const findingsList = document.getElementById('clinical-findings');
+            findingsList.innerHTML = '';
+            state.clinicalFindings.forEach(find => {
+                const li = document.createElement('li');
+                li.className = "flex items-start gap-1.5";
+                li.innerHTML = `<i class="fa-solid fa-notes-medical text-emerald-600 mt-0.5"></i> <span>${find}</span>`;
+                findingsList.appendChild(li);
+            });
+
+            // Setear Botones de opción
+            const choicesContainer = document.getElementById('clinical-choices');
+            choicesContainer.innerHTML = '';
+            
+            currentStep.choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = "text-left p-3 rounded-lg border border-slate-200 hover:border-emerald-700 hover:bg-emerald-50 text-sm font-semibold transition-all bg-slate-50 text-slate-700";
+                btn.innerText = choice.text;
+                btn.onclick = () => selectClinicalChoice(choice, currentStep.findings);
+                choicesContainer.appendChild(btn);
+            });
+        }
+
+        function selectClinicalChoice(choice, finding) {
+            // Modificar métricas
+            state.clinicalAccuracy = Math.min(100, Math.max(0, state.clinicalAccuracy + choice.scoreDiff));
+            state.clinicalRapport = Math.min(100, Math.max(0, state.clinicalRapport + choice.rapportDiff));
+            
+            // Registrar hallazgo
+            if (!state.clinicalFindings.includes(finding)) {
+                state.clinicalFindings.push(finding);
+            }
+
+            updateClinicalMetrics();
+
+            // Desplegar feedback del paciente
+            const dialogBox = document.getElementById('dialogue-box');
+            dialogBox.innerHTML += `
+                <div class="flex gap-3 justify-end mt-4">
+                    <div class="bg-emerald-100 p-3 rounded-xl border border-emerald-200 text-sm max-w-[85%] shadow-sm text-right">
+                        <p class="font-bold text-xs text-emerald-800 uppercase tracking-widest mb-1">Tu Respuesta</p>
+                        <p class="text-emerald-950">Acción o diagnóstico aplicado.</p>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-stethoscope"></i></div>
+                </div>
+                <div class="flex gap-3 mt-4">
+                    <div class="w-8 h-8 rounded-full bg-navy text-gold flex items-center justify-center font-bold text-xs">P</div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 text-sm max-w-[85%] shadow-sm">
+                        <p class="font-bold text-xs text-slate-400 uppercase tracking-widest mb-1">${clinicalCases[state.activeCaseIndex].patient}</p>
+                        <p class="text-slate-700 font-medium">${choice.response}</p>
+                    </div>
+                </div>
+            `;
+
+            // Ocultar elecciones, mostrar botón Siguiente
+            const choicesContainer = document.getElementById('clinical-choices');
+            choicesContainer.innerHTML = `
+                <button onclick="nextClinicalStep()" class="w-full text-center p-3 bg-emerald-800 hover:bg-emerald-900 text-white text-sm font-bold rounded-lg transition-all shadow-md">
+                    Continuar con el Expediente <i class="fa-solid fa-chevron-right ml-2"></i>
+                </button>
+            `;
+        }
+
+        function updateClinicalMetrics() {
+            document.getElementById('metric-accuracy').innerText = `${state.clinicalAccuracy}%`;
+            document.getElementById('bar-accuracy').style.width = `${state.clinicalAccuracy}%`;
+            
+            document.getElementById('metric-rapport').innerText = `${state.clinicalRapport}%`;
+            document.getElementById('bar-rapport').style.width = `${state.clinicalRapport}%`;
+        }
+
+        function nextClinicalStep() {
+            const activeCase = clinicalCases[state.activeCaseIndex];
+            state.activeCaseStep++;
+
+            if (state.activeCaseStep < activeCase.steps.length) {
+                loadClinicalStep();
+            } else {
+                // Caso Resuelto
+                state.statClinicalCasesSolved++;
+                // Dar XP de premio
+                const caseXP = Math.round((state.clinicalAccuracy + state.clinicalRapport) * 2);
+                addXP(caseXP);
+
+                // Siguiente Caso Clínico o Final
+                state.activeCaseIndex++;
+                state.activeCaseStep = 0;
+                state.clinicalFindings = [];
+
+                if (state.activeCaseIndex < clinicalCases.length) {
+                    loadClinicalStep();
+                } else {
+                    showFinalResults();
+                }
+            }
+        }
+
+        // --- 9. MÓDULO FLASHCARDS S.O.C. ---
+        function startFlashcards() {
+            state.activeCardIndex = 0;
+            state.isCardFlipped = false;
+            changeView('flashcards');
+            loadFlashcard();
+        }
+
+        function loadFlashcard() {
+            const card = flashcardsDataset[state.activeCardIndex];
+            
+            document.getElementById('flashcard-counter').innerText = `Ficha ${state.activeCardIndex + 1} de ${flashcardsDataset.length}`;
+            document.getElementById('card-tag').innerText = card.tag;
+            document.getElementById('card-question').innerText = card.question;
+            document.getElementById('card-answer').innerText = card.answer;
+            
+            // Volver la tarjeta a posición original si estaba rotada
+            document.getElementById('flashcard-inner').classList.remove('flipped');
+            state.isCardFlipped = false;
+        }
+
+        function flipCard() {
+            const inner = document.getElementById('flashcard-inner');
+            inner.classList.toggle('flipped');
+            state.isCardFlipped = !state.isCardFlipped;
+        }
+
+        function nextCard() {
+            state.activeCardIndex = (state.activeCardIndex + 1) % flashcardsDataset.length;
+            loadFlashcard();
+        }
+
+        function prevCard() {
+            state.activeCardIndex = (state.activeCardIndex - 1 + flashcardsDataset.length) % flashcardsDataset.length;
+            loadFlashcard();
+        }
+
+        function markCardLearned() {
+            state.statCardsLearned++;
+            addXP(15);
+            updateStatsUI();
+            nextCard();
+        }
+
+        // --- 10. MÓDULO FINALES Y REINICIOS ---
+        function showFinalResults() {
+            changeView('results');
+            document.getElementById('result-score').innerText = `${state.score} XP`;
+            
+            let accuracy = state.totalAnswersCount > 0 ? Math.round((state.correctAnswersCount / state.totalAnswersCount) * 100) : 100;
+            document.getElementById('result-accuracy').innerText = `${accuracy}%`;
+
+            let feedback = "¡Excelente desempeño general! Dominas la ontogenia sensorial y las transiciones del adulto con gran fluidez. Recomiendo continuar estudiando el caso clínico de Carlos para afilar los diagnósticos diferenciales en el ámbito laboral.";
+            let rank = "Especialista del Ciclo Vital";
+
+            if (state.score < 500) {
+                feedback = "Buen comienzo, pero debes esforzarte más. Repasa las leyes del crecimiento infantil y los subtipos de demencia en la edad tardía.";
+                rank = "Auxiliar Académico";
+            } else if (state.score < 1000) {
+                feedback = "Demuestras un dominio técnico intermedio. Pon especial atención a los estadios de operaciones de Piaget y el modelo SOC de Baltes.";
+                rank = "Interno del Desarrollo";
+            }
+
+            document.getElementById('result-rank').innerText = rank;
+            document.getElementById('result-feedback').innerText = feedback;
+        }
+
+        function showGameOver() {
+            alert("Has agotado todas tus vidas. El juego se reiniciará para que puedas seguir practicando.");
+            resetGame();
+        }
+
+        function resetGame() {
+            state.score = 0;
+            state.lives = 3;
+            state.completedStages = [1];
+            state.activeStage = null;
+            state.activeQuestionIndex = 0;
+            state.correctAnswersCount = 0;
+            state.totalAnswersCount = 0;
+            state.statQuestionsAnswered = 0;
+            state.statClinicalCasesSolved = 0;
+            state.statCardsLearned = 0;
+            
+            changeView('home');
+        }
+
+        // Inicialización de vidas al cargar
+        window.onload = function() {
+            updateHeartsUI();
+            updateScoreUI();
+        }
+    </script>
+</body>
+</html>
