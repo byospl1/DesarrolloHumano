@@ -651,7 +651,7 @@
                     explanation: "El temperamento representa el sustrato biológico innato de la reactividad emocional, a diferencia del carácter (aprendido) y la personalidad (integración de ambos)."
                 },
                 {
-                    question: "¿Qué conceptor describe los cambios en la expresión génica causados por el entorno sin alterar la secuencia subyacente de ADN?",
+                    question: "¿Qué concepto describe los cambios en la expresión génica causados por el entorno sin alterar la secuencia subyacente de ADN?",
                     options: ["Heredabilidad", "Genotipo mendeliano", "Epigenética", "Maduración autónoma"],
                     answerIndex: 2,
                     explanation: "La epigenética es el puente biológico directo entre el entorno y la biología humana, modificando cómo los genes son expresados."
@@ -972,7 +972,7 @@
                                 text: "Sugerirle que no piense en eso y que se resigne a que la jubilación significa descanso absoluto en cama.",
                                 scoreDiff: -15,
                                 rapportDiff: -10,
-                                response: "Don Arturo se desanima: 'El sedentarismo me va a matar más rápido que la edad'."
+                                response: "Don Arturo se desanimó: 'El sedentarismo me va a matar más rápido que la edad'."
                             }
                         ],
                         findings: "Aplicación clínica del modelo SOC y resolución psicosocial de la vejez."
@@ -1183,4 +1183,456 @@
             quizContainer.classList.add('hidden');
             document.getElementById('ai-loading-text').innerText = "Gemini está cruzando referencias clínicas y redactando el informe...";
 
-            const systemInstruction = "Eres un supervisor clínico universitario de psicología de alta exigencia académica. Vas a examinar el caso propuesto con base en autores como Papalia (desarrollo biológico/físico), Erikson (desarrollo psicosocial), Piaget (cognitivo), Kohlberg (desarrollo moral) y Baltes (envejecimiento). Devuelve una respuesta estructurada directamente con etiquetas de marcado HTML limpio (usa h3, p, ul, li, strong, sin etiquetas de markdown
+            const systemInstruction = "Eres un supervisor clínico universitario de psicología de alta exigencia académica. Vas a examinar el caso propuesto con base en autores como Papalia (desarrollo biológico/físico), Erikson (desarrollo psicosocial), Piaget (cognitivo), Kohlberg (desarrollo moral) y Baltes (envejecimiento). Devuelve una respuesta estructurada directamente con etiquetas de marcado HTML limpio (usa h3, p, ul, li, strong, sin etiquetas de markdown de tipo html al principio ni final) para dar un formato elegante. El informe clínico debe tener tres secciones bien detalladas: 1. Hipótesis Diagnóstica y Análisis Clínico de la Etapa del Ciclo Vital, 2. Marco Teórico Explicativo y 3. Propuesta de Intervención Psicológica y Recomendaciones.";
+
+            try {
+                const responseText = await callGeminiAPI(caseInput, systemInstruction);
+                document.getElementById('ai-analysis-text-content').innerHTML = responseText;
+                resultContainer.classList.remove('hidden');
+                addXP(25); // Premio pequeño por consultar herramientas de IA
+            } catch (err) {
+                alert(`Error en el Laboratorio IA: ${err.message}`);
+            } finally {
+                loadingContainer.classList.add('hidden');
+            }
+        }
+
+        // Acciones del Laboratorio de IA: Generar Desafío Dinámico de Trivia
+        async function generateQuestionWithAI() {
+            const stageTopic = document.getElementById('ai-stage-select').value;
+            const loadingContainer = document.getElementById('ai-loading-container');
+            const resultContainer = document.getElementById('ai-analysis-result-container');
+            const quizContainer = document.getElementById('ai-quiz-container');
+
+            loadingContainer.classList.remove('hidden');
+            resultContainer.classList.add('hidden');
+            quizContainer.classList.add('hidden');
+            document.getElementById('ai-loading-text').innerText = "Formulando una pregunta avanzada estilo examen universitario con Gemini...";
+
+            const systemInstruction = "Eres un generador de preguntas de evaluación universitaria de psicología del desarrollo humano de alta complejidad. Genera una pregunta de trivia interactiva basada exclusivamente en el eje temático provisto. Debes responder con un objeto JSON estructurado que cumpla exactamente el siguiente esquema.";
+            
+            const responseSchema = {
+                type: "OBJECT",
+                properties: {
+                    pregunta: { type: "STRING" },
+                    opciones: {
+                        type: "ARRAY",
+                        items: { type: "STRING" }
+                    },
+                    respuesta_correcta_index: { type: "INTEGER" },
+                    explicacion: { type: "STRING" }
+                },
+                required: ["pregunta", "opciones", "respuesta_correcta_index", "explicacion"]
+            };
+
+            const promptText = `Genera un desafío de examen muy detallado y clínico para el tema: "${stageTopic}". Las opciones deben ser académicamente plausibles (distractores fuertes).`;
+
+            try {
+                const jsonText = await callGeminiAPI(promptText, systemInstruction, responseSchema);
+                const quizData = JSON.parse(jsonText);
+                
+                state.activeAIQuestion = quizData;
+                state.hasAnsweredAIQuestion = false;
+
+                // Renderizar la pregunta en el contenedor
+                document.getElementById('ai-quiz-question').innerText = quizData.pregunta;
+                
+                const optionsBox = document.getElementById('ai-quiz-options');
+                optionsBox.innerHTML = '';
+                
+                quizData.opciones.forEach((opcion, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = "text-left p-4 rounded-xl border border-slate-200 hover:border-amber-600 hover:bg-amber-50/50 transition-all font-medium text-slate-700 bg-white flex items-center gap-3";
+                    btn.innerHTML = `<span class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs text-amber-900">${String.fromCharCode(65 + index)}</span> <span class="text-sm">${opcion}</span>`;
+                    btn.onclick = () => selectAIQuizOption(index);
+                    optionsBox.appendChild(btn);
+                });
+
+                document.getElementById('ai-quiz-feedback').classList.add('hidden');
+                quizContainer.classList.remove('hidden');
+            } catch (err) {
+                alert(`Error al generar la pregunta interactiva: ${err.message}`);
+            } finally {
+                loadingContainer.classList.add('hidden');
+            }
+        }
+
+        // Evaluar la opción seleccionada en el juego de IA
+        function selectAIQuizOption(selectedIndex) {
+            if (state.hasAnsweredAIQuestion) return;
+            state.hasAnsweredAIQuestion = true;
+
+            const quizData = state.activeAIQuestion;
+            const optionElements = document.getElementById('ai-quiz-options').children;
+
+            // Bloquear clics extra
+            for (let btn of optionElements) {
+                btn.disabled = true;
+            }
+
+            state.totalAnswersCount++;
+            state.statQuestionsAnswered++;
+
+            const feedbackPanel = document.getElementById('ai-quiz-feedback');
+            const feedbackIcon = document.getElementById('ai-quiz-feedback-icon');
+            const feedbackTitle = document.getElementById('ai-quiz-feedback-title');
+            const feedbackText = document.getElementById('ai-quiz-feedback-text');
+
+            feedbackPanel.classList.remove('hidden');
+
+            if (selectedIndex === quizData.respuesta_correcta_index) {
+                state.correctAnswersCount++;
+                addXP(75); // Más puntos por responder un desafío de la IA
+                optionElements[selectedIndex].className = "text-left p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 font-medium text-emerald-900 flex items-center gap-3";
+                feedbackIcon.innerHTML = "🎉";
+                feedbackTitle.innerText = "¡Excelente Respuesta! +75 XP";
+                feedbackTitle.className = "font-bold text-sm text-emerald-800";
+            } else {
+                loseLife();
+                optionElements[selectedIndex].className = "text-left p-4 rounded-xl border-2 border-rose-500 bg-rose-50/50 font-medium text-rose-900 flex items-center gap-3";
+                optionElements[quizData.respuesta_correcta_index].className = "text-left p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 font-medium text-emerald-900 flex items-center gap-3";
+                feedbackIcon.innerHTML = "❌";
+                feedbackTitle.innerText = "Incorrecto";
+                feedbackTitle.className = "font-bold text-sm text-rose-800";
+            }
+
+            feedbackText.innerText = quizData.explicacion;
+            updateStatsUI();
+        }
+
+        // Cerrar resultados del Laboratorio IA
+        function closeAIResult(containerId) {
+            document.getElementById(containerId).classList.add('hidden');
+        }
+
+        // Cargar plantillas de casos clínicos en el textarea
+        function fillAICaseTemplate(id) {
+            const textarea = document.getElementById('ai-case-input');
+            if (id === 1) {
+                textarea.value = "Paciente masculino de 45 años, casado, con hijos de 16 y 14 años. Su padre fue diagnosticado con artrosis severa y declive metabólico, por lo que asume sus cuidados además de su jornada de oficina de 9 horas. Reporta fatiga constante, dolores somáticos inexplicables en espalda, y refiere: 'Me siento responsable de todos, pero nadie me cuida a mí. Veo mis fotos antiguas y siento que mi juventud ya se extinguió, que el tiempo va muy de prisa'.";
+            } else if (id === 2) {
+                textarea.value = "Niña de 8 años, asiste a 3° de primaria. Desde hace 3 semanas llora intensamente y simula dolores estomacales agudos cada mañana antes de subir al transporte escolar. Sus calificaciones han bajado y reporta tener miedo de que 'algo malo le pase a mi mamá mientras yo no estoy en el salón de clases'.";
+            } else if (id === 3) {
+                textarea.value = "Adulto mayor de 74 años, soltero, con diagnóstico de osteopenia y una marcha notablemente más lenta. Para continuar con su pasatiempo preferido de jardinería, ha decidido dejar de regar macetas colgantes altas (que le causaban caídas) y enfocarse en plantar hierbas aromáticas en camas elevadas de fácil acceso con apoyo de su sobrino.";
+            }
+        }
+
+        function loadQuestion() {
+            const stageQs = questionDatabase[state.activeStage];
+            const currentQ = stageQs[state.activeQuestionIndex];
+            
+            document.getElementById('trivia-stage-indicator').innerText = `Etapa ${state.activeStage}`;
+            document.getElementById('trivia-progress').innerText = `Pregunta ${state.activeQuestionIndex + 1}/${stageQs.length}`;
+            
+            const progressPct = ((state.activeQuestionIndex) / stageQs.length) * 100;
+            document.getElementById('trivia-progress-bar').style.width = `${progressPct}%`;
+            
+            document.getElementById('trivia-question-text').innerText = currentQ.question;
+            
+            const container = document.getElementById('trivia-options-container');
+            container.innerHTML = '';
+            
+            currentQ.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = "text-left p-4 rounded-xl border border-slate-200 hover:border-navy hover:bg-slate-50 transition-all font-medium text-slate-700 bg-white flex items-center gap-3";
+                btn.innerHTML = `<span class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-sm color-navy group-hover:bg-gold">${String.fromCharCode(65 + index)}</span> <span>${option}</span>`;
+                btn.onclick = () => selectOption(index);
+                container.appendChild(btn);
+            });
+
+            // Resetear explicación
+            document.getElementById('trivia-explanation-panel').classList.add('hidden');
+        }
+
+        function selectOption(selectedIndex) {
+            const stageQs = questionDatabase[state.activeStage];
+            const currentQ = stageQs[state.activeQuestionIndex];
+            const optionsBtns = document.getElementById('trivia-options-container').children;
+            
+            // Bloquear interacción extra
+            for (let btn of optionsBtns) {
+                btn.disabled = true;
+            }
+
+            state.totalAnswersCount++;
+            state.statQuestionsAnswered++;
+
+            const explPanel = document.getElementById('trivia-explanation-panel');
+            const explIcon = document.getElementById('explanation-icon');
+            const explTitle = document.getElementById('explanation-title');
+            const explText = document.getElementById('explanation-text');
+            
+            explPanel.classList.remove('hidden');
+
+            if (selectedIndex === currentQ.answerIndex) {
+                // Correcto
+                state.correctAnswersCount++;
+                addXP(50);
+                optionsBtns[selectedIndex].className = "text-left p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 font-medium text-emerald-900 flex items-center gap-3";
+                explIcon.innerHTML = "🎉";
+                explTitle.innerText = "¡Excelente Respuesta!";
+                explTitle.className = "font-bold text-lg text-emerald-800 mb-1";
+            } else {
+                // Incorrecto
+                loseLife();
+                optionsBtns[selectedIndex].className = "text-left p-4 rounded-xl border-2 border-rose-500 bg-rose-50/50 font-medium text-rose-900 flex items-center gap-3";
+                optionsBtns[currentQ.answerIndex].className = "text-left p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 font-medium text-emerald-900 flex items-center gap-3";
+                explIcon.innerHTML = "❌";
+                explTitle.innerText = "Respuesta Incorrecta";
+                explTitle.className = "font-bold text-lg text-rose-800 mb-1";
+            }
+
+            explText.innerText = currentQ.explanation;
+            updateStatsUI();
+        }
+
+        function nextQuestion() {
+            const stageQs = questionDatabase[state.activeStage];
+            state.activeQuestionIndex++;
+
+            if (state.activeQuestionIndex < stageQs.length) {
+                loadQuestion();
+            } else {
+                // Fin de Etapa con Éxito
+                addXP(100);
+                // Desbloquear la siguiente etapa
+                const nextStage = state.activeStage + 1;
+                if (nextStage <= 7 && !state.completedStages.includes(nextStage)) {
+                    state.completedStages.push(nextStage);
+                }
+                
+                if (state.activeStage === 7) {
+                    showFinalResults();
+                } else {
+                    changeView('adventure');
+                }
+            }
+        }
+
+        // --- 9. MÓDULO SIMULADOR CLÍNICO ---
+        function startClinicalSimulation() {
+            state.activeCaseIndex = 0;
+            state.activeCaseStep = 0;
+            state.clinicalAccuracy = 50;
+            state.clinicalRapport = 50;
+            state.clinicalFindings = [];
+            changeView('clinical');
+            loadClinicalStep();
+        }
+
+        function loadClinicalStep() {
+            const activeCase = clinicalCases[state.activeCaseIndex];
+            const currentStep = activeCase.steps[state.activeCaseStep];
+            
+            document.getElementById('patient-name').innerText = `Paciente: ${activeCase.patient}`;
+            document.getElementById('patient-age').innerText = `Edad: ${activeCase.age} | ${activeCase.etapa}`;
+            document.getElementById('simulation-step').innerText = `Paso ${state.activeCaseStep + 1}/${activeCase.steps.length}`;
+            
+            // Setear Métricas Visuales
+            updateClinicalMetrics();
+
+            // Setear Diálogo del paciente
+            const dialogBox = document.getElementById('dialogue-box');
+            dialogBox.innerHTML = `
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-full bg-navy text-gold flex items-center justify-center font-bold text-xs">P</div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 text-sm max-w-[85%] shadow-sm">
+                        <p class="font-bold text-xs text-slate-400 uppercase tracking-widest mb-1">${activeCase.patient}</p>
+                        <p class="text-slate-700">${currentStep.text}</p>
+                    </div>
+                </div>
+            `;
+
+            // Setear Hallazgos
+            const findingsList = document.getElementById('clinical-findings');
+            findingsList.innerHTML = '';
+            state.clinicalFindings.forEach(find => {
+                const li = document.createElement('li');
+                li.className = "flex items-start gap-1.5";
+                li.innerHTML = `<i class="fa-solid fa-notes-medical text-emerald-600 mt-0.5"></i> <span>${find}</span>`;
+                findingsList.appendChild(li);
+            });
+
+            // Setear Botones de opción
+            const choicesContainer = document.getElementById('clinical-choices');
+            choicesContainer.innerHTML = '';
+            
+            currentStep.choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = "text-left p-3 rounded-lg border border-slate-200 hover:border-emerald-700 hover:bg-emerald-50 text-sm font-semibold transition-all bg-slate-50 text-slate-700";
+                btn.innerText = choice.text;
+                btn.onclick = () => selectClinicalChoice(choice, currentStep.findings);
+                choicesContainer.appendChild(btn);
+            });
+        }
+
+        function selectClinicalChoice(choice, finding) {
+            // Modificar métricas
+            state.clinicalAccuracy = Math.min(100, Math.max(0, state.clinicalAccuracy + choice.scoreDiff));
+            state.clinicalRapport = Math.min(100, Math.max(0, state.clinicalRapport + choice.rapportDiff));
+            
+            // Registrar hallazgo
+            if (!state.clinicalFindings.includes(finding)) {
+                state.clinicalFindings.push(finding);
+            }
+
+            updateClinicalMetrics();
+
+            // Desplegar feedback del paciente
+            const dialogBox = document.getElementById('dialogue-box');
+            dialogBox.innerHTML += `
+                <div class="flex gap-3 justify-end mt-4">
+                    <div class="bg-emerald-100 p-3 rounded-xl border border-emerald-200 text-sm max-w-[85%] shadow-sm text-right">
+                        <p class="font-bold text-xs text-emerald-800 uppercase tracking-widest mb-1">Tu Respuesta</p>
+                        <p class="text-emerald-950">Acción o diagnóstico aplicado.</p>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-stethoscope"></i></div>
+                </div>
+                <div class="flex gap-3 mt-4">
+                    <div class="w-8 h-8 rounded-full bg-navy text-gold flex items-center justify-center font-bold text-xs">P</div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 text-sm max-w-[85%] shadow-sm">
+                        <p class="font-bold text-xs text-slate-400 uppercase tracking-widest mb-1">${clinicalCases[state.activeCaseIndex].patient}</p>
+                        <p class="text-slate-700 font-medium">${choice.response}</p>
+                    </div>
+                </div>
+            `;
+
+            // Ocultar elecciones, mostrar botón Siguiente
+            const choicesContainer = document.getElementById('clinical-choices');
+            choicesContainer.innerHTML = `
+                <button onclick="nextClinicalStep()" class="w-full text-center p-3 bg-emerald-800 hover:bg-emerald-900 text-white text-sm font-bold rounded-lg transition-all shadow-md">
+                    Continuar con el Expediente <i class="fa-solid fa-chevron-right ml-2"></i>
+                </button>
+            `;
+        }
+
+        function updateClinicalMetrics() {
+            document.getElementById('metric-accuracy').innerText = `${state.clinicalAccuracy}%`;
+            document.getElementById('bar-accuracy').style.width = `${state.clinicalAccuracy}%`;
+            
+            document.getElementById('metric-rapport').innerText = `${state.clinicalRapport}%`;
+            document.getElementById('bar-rapport').style.width = `${state.clinicalRapport}%`;
+        }
+
+        function nextClinicalStep() {
+            const activeCase = clinicalCases[state.activeCaseIndex];
+            state.activeCaseStep++;
+
+            if (state.activeCaseStep < activeCase.steps.length) {
+                loadClinicalStep();
+            } else {
+                // Caso Resuelto
+                state.statClinicalCasesSolved++;
+                // Dar XP de premio
+                const caseXP = Math.round((state.clinicalAccuracy + state.clinicalRapport) * 2);
+                addXP(caseXP);
+
+                // Siguiente Caso Clínico o Final
+                state.activeCaseIndex++;
+                state.activeCaseStep = 0;
+                state.clinicalFindings = [];
+
+                if (state.activeCaseIndex < clinicalCases.length) {
+                    loadClinicalStep();
+                } else {
+                    showFinalResults();
+                }
+            }
+        }
+
+        // --- 10. MÓDULO FLASHCARDS S.O.C. ---
+        function startFlashcards() {
+            state.activeCardIndex = 0;
+            state.isCardFlipped = false;
+            changeView('flashcards');
+            loadFlashcard();
+        }
+
+        function loadFlashcard() {
+            const card = flashcardsDataset[state.activeCardIndex];
+            
+            document.getElementById('flashcard-counter').innerText = `Ficha ${state.activeCardIndex + 1} de ${flashcardsDataset.length}`;
+            document.getElementById('card-tag').innerText = card.tag;
+            document.getElementById('card-question').innerText = card.question;
+            document.getElementById('card-answer').innerText = card.answer;
+            
+            // Volver la tarjeta a posición original si estaba rotada
+            document.getElementById('flashcard-inner').classList.remove('flipped');
+            state.isCardFlipped = false;
+        }
+
+        function flipCard() {
+            const inner = document.getElementById('flashcard-inner');
+            inner.classList.toggle('flipped');
+            state.isCardFlipped = !state.isCardFlipped;
+        }
+
+        function nextCard() {
+            state.activeCardIndex = (state.activeCardIndex + 1) % flashcardsDataset.length;
+            loadFlashcard();
+        }
+
+        // Retroceder en mazo
+        function prevCard() {
+            state.activeCardIndex = (state.activeCardIndex - 1 + flashcardsDataset.length) % flashcardsDataset.length;
+            loadFlashcard();
+        }
+
+        function markCardLearned() {
+            state.statCardsLearned++;
+            addXP(15);
+            updateStatsUI();
+            nextCard();
+        }
+
+        // --- 11. MÓDULO FINALES Y REINICIOS ---
+        function showFinalResults() {
+            changeView('results');
+            document.getElementById('result-score').innerText = `${state.score} XP`;
+            
+            let accuracy = state.totalAnswersCount > 0 ? Math.round((state.correctAnswersCount / state.totalAnswersCount) * 100) : 100;
+            document.getElementById('result-accuracy').innerText = `${accuracy}%`;
+
+            let feedback = "¡Excelente desempeño general! Dominas la ontogenia sensorial y las transiciones del adulto con gran fluidez. Recomiendo continuar estudiando el caso clínico de Carlos para afinar los diagnósticos diferenciales en el ámbito laboral.";
+            let rank = "Especialista del Ciclo Vital";
+
+            if (state.score < 500) {
+                feedback = "Buen comienzo, pero debes esforzarte más. Repasa las leyes del crecimiento infantil y los subtipos de demencia en la edad tardía.";
+                rank = "Auxiliar Académico";
+            } else if (state.score < 1000) {
+                feedback = "Demuestras un dominio técnico intermedio. Pon especial atención a los estadios de operaciones de Piaget y el modelo SOC de Baltes.";
+                rank = "Interno del Desarrollo";
+            }
+
+            document.getElementById('result-rank').innerText = rank;
+            document.getElementById('result-feedback').innerText = feedback;
+        }
+
+        function showGameOver() {
+            alert("Has agotado todas tus vidas. El juego se reiniciará para que puedas seguir practicando.");
+            resetGame();
+        }
+
+        function resetGame() {
+            state.score = 0;
+            state.lives = 3;
+            state.completedStages = [1];
+            state.activeStage = null;
+            state.activeQuestionIndex = 0;
+            state.correctAnswersCount = 0;
+            state.totalAnswersCount = 0;
+            state.statQuestionsAnswered = 0;
+            state.statClinicalCasesSolved = 0;
+            state.statCardsLearned = 0;
+            
+            changeView('home');
+        }
+
+        // Inicialización de vidas al cargar
+        window.onload = function() {
+            updateHeartsUI();
+            updateScoreUI();
+        }
+    </script>
+</body>
+</html>
