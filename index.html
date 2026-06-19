@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viaje por el Ciclo Vital: Simulador Académico de Desarrollo Humano</title>
+    <title>Viaje por el Ciclo Vital: RPG Académico de Desarrollo Humano</title>
     <!-- Tailwind CSS para diseño moderno -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts para tipografías premium -->
@@ -28,6 +28,49 @@
         .bg-gold { background-color: #D4AF37; }
         .border-gold { border-color: #D4AF37; }
         
+        /* --- ANIMACIONES DE COMBATE RPG --- */
+        @keyframes idle-hero {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        @keyframes idle-monster {
+            0%, 100% { transform: translateY(0) scaleX(-1); }
+            50% { transform: translateY(-4px) scaleX(-1); }
+        }
+        @keyframes attack-hero {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-15px) scale(0.9); }
+            50% { transform: translateX(110px) scale(1.2) rotate(15deg); }
+            100% { transform: translateX(0); }
+        }
+        @keyframes attack-monster {
+            0% { transform: translateX(0) scaleX(-1); }
+            25% { transform: translateX(15px) scale(0.9) scaleX(-1); }
+            50% { transform: translateX(-110px) scale(1.2) rotate(-15deg) scaleX(-1); }
+            100% { transform: translateX(0) scaleX(-1); }
+        }
+        @keyframes damage-shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        @keyframes float-text {
+            0% { opacity: 0; transform: translateY(0) scale(0.5); }
+            20% { opacity: 1; transform: translateY(-25px) scale(1.2); }
+            100% { opacity: 0; transform: translateY(-60px) scale(0.9); }
+        }
+
+        /* Clases de Activación de Animación */
+        .animate-idle-hero { animation: idle-hero 2s infinite ease-in-out; }
+        .animate-idle-monster { animation: idle-monster 2.2s infinite ease-in-out; }
+        .animate-attack-hero { animation: attack-hero 0.6s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        .animate-attack-monster { animation: attack-monster 0.6s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        .animate-shake { animation: damage-shake 0.4s ease-in-out; }
+        
+        .floating-impact {
+            animation: float-text 1.2s forwards ease-out;
+        }
+
         /* Efecto de rotación de flashcards */
         .perspective {
             perspective: 1000px;
@@ -45,35 +88,59 @@
         .rotate-y-180 {
             transform: rotateY(180deg);
         }
+
+        /* DISEÑO DE LA RULETA */
+        .roulette-wheel {
+            background: conic-gradient(
+                #10B981 0deg 72deg,    /* Verde: Vida Extra (20%) */
+                #3B82F6 72deg 90deg,   /* Azul: Inmunidad (5%) */
+                #F59E0B 90deg 180deg,  /* Naranja: Pista (25%) */
+                #8B5CF6 180deg 270deg, /* Morado: Saltar (25%) */
+                #6B7280 270deg 360deg  /* Gris: Sin Ayuda (25%) */
+            );
+            border: 12px solid #002147;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3), inset 0 0 15px rgba(0,0,0,0.2);
+            transition: transform 4s cubic-bezier(0.1, 0.8, 0.1, 1);
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-slate-800">
 
     <!-- HEADER GLOBAL -->
-    <header class="bg-navy text-white shadow-lg border-b-4 border-gold">
+    <header class="bg-navy text-white shadow-lg border-b-4 border-gold text-sm">
         <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
                 <div class="bg-gold p-2 rounded-lg text-navy text-2xl font-bold">
-                    <i class="fa-solid fa-brain"></i>
+                    <i class="fa-solid fa-sword text-navy"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold tracking-wide">Viaje por el Ciclo Vital</h1>
-                    <p class="text-xs text-gold font-semibold uppercase tracking-widest">Simulador de Psicología del Desarrollo</p>
+                    <h1 class="text-xl md:text-2xl font-bold tracking-wide">Viaje por el Ciclo Vital: RPG</h1>
+                    <p class="text-xs text-gold font-semibold uppercase tracking-widest">Aprende Jugando Psicología del Desarrollo</p>
                 </div>
             </div>
             
             <!-- Indicadores del Jugador -->
-            <div class="flex items-center gap-6 text-sm">
-                <div class="bg-slate-900/50 px-4 py-2 rounded-full border border-gold/30 flex items-center gap-2">
-                    <span class="text-xs text-slate-300">Nivel Académico:</span>
-                    <span id="player-title" class="font-bold text-gold">Estudiante de Pregrado</span>
+            <div class="flex flex-wrap items-center justify-center gap-4 text-sm">
+                <!-- Inventario del Jugador en el Header -->
+                <div class="flex items-center gap-3 bg-slate-950/40 px-3 py-1.5 rounded-lg border border-slate-700 text-xs">
+                    <span title="Pistas Disponibles" class="flex items-center gap-1"><span class="text-amber-400">🔮</span> <strong id="header-hints-count">0</strong></span>
+                    <span title="Comodines para Saltar" class="flex items-center gap-1"><span class="text-violet-400">⏭️</span> <strong id="header-skips-count">0</strong></span>
+                    <span id="header-immunity-timer" class="hidden text-emerald-400 font-bold flex items-center gap-1 animate-pulse">
+                        <i class="fa-solid fa-shield-halved"></i> <span id="immunity-clock">0:00</span>
+                    </span>
                 </div>
-                <div class="flex items-center gap-2 bg-navy-light px-3 py-1.5 rounded-lg border border-slate-700">
+
+                <div class="bg-slate-900/50 px-4 py-2 rounded-full border border-gold/30 flex items-center gap-2">
+                    <span class="text-xs text-slate-300">Rango Clínico:</span>
+                    <span id="player-title" class="font-bold text-gold">Estudiante</span>
+                </div>
+                
+                <div class="flex items-center gap-2 bg-slate-950/40 px-3 py-1.5 rounded-lg border border-slate-700">
                     <i class="fa-solid fa-trophy text-gold"></i>
                     <span class="font-bold" id="global-score">0 XP</span>
                 </div>
-                <div class="flex items-center gap-1.5" id="heart-container">
-                    <!-- Las vidas se renderizan de forma dinámica -->
+                <div class="flex items-center gap-1" id="heart-container">
+                    <!-- Las vidas se renderizan de forma dinámica (máximo 5) -->
                 </div>
             </div>
         </div>
@@ -84,24 +151,26 @@
         
         <!-- PANTALLA 1: MENÚ PRINCIPAL (HOME) -->
         <div id="view-home" class="view-panel space-y-8 py-4">
+
             <div class="bg-white rounded-2xl shadow-xl p-6 md:p-10 border border-slate-200/80 text-center relative overflow-hidden">
                 <div class="absolute -top-10 -right-10 w-40 height-40 rounded-full bg-gold/5 blur-xl"></div>
                 <div class="absolute -bottom-10 -left-10 w-45 height-45 rounded-full bg-navy/5 blur-xl"></div>
                 
-                <h2 class="text-3xl md:text-5xl font-bold color-navy mb-4">¿Preparado para Convertirte en Especialista?</h2>
+                <div class="text-6xl mb-4 animate-bounce">🎓⚔️👾</div>
+                <h2 class="text-3xl md:text-5xl font-bold color-navy mb-4">¡Derrota a los Obstáculos Académicos!</h2>
                 <p class="text-slate-600 max-w-2xl mx-auto mb-8 text-base md:text-lg">
-                    Domina todos los hitos biológicos, cognitivos y psicosociales desde la concepción hasta el envejecimiento avanzado. Resuelve dilemas diagnósticos y prepárate para tus exámenes de la forma más eficiente.
+                    Domina todos los hitos biológicos, cognitivos y psicosociales del ciclo vital. Enfréntate en combates de trivia a los temibles monstruos teóricos y resuelve casos para avanzar.
                 </p>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Opción 1: Ruta del Ciclo Vital -->
                     <button onclick="changeView('adventure')" class="group text-left p-6 rounded-xl border border-slate-200 bg-[#FDFCF0]/50 hover:bg-white hover:shadow-xl hover:border-gold transition-all duration-300">
                         <div class="w-12 h-12 rounded-lg bg-navy text-gold flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-route"></i>
+                            <i class="fa-solid fa-mountain-sun"></i>
                         </div>
-                        <h3 class="text-xl font-bold color-navy mb-2">Ruta de Aprendizaje</h3>
-                        <p class="text-xs text-slate-500 mb-3">7 Etapas de la Vida</p>
-                        <p class="text-sm text-slate-600">Desafía tu intelecto con preguntas de trivia académica de alta complejidad.</p>
+                        <h3 class="text-xl font-bold color-navy mb-2">Escala la Colina Teórica</h3>
+                        <p class="text-xs text-slate-500 mb-3">7 Bestias Académicas</p>
+                        <p class="text-sm text-slate-600">Sube la colina del desarrollo derrotando a monstruos temáticos con tus aciertos.</p>
                     </button>
 
                     <!-- Opción 2: Simulador Clínico -->
@@ -120,19 +189,7 @@
                             <i class="fa-solid fa-layer-group"></i>
                         </div>
                         <h3 class="text-xl font-bold color-navy mb-2">Flashcards Activas</h3>
-                        <p class="text-xs text-amber-700 mb-3">Mazo de Estudio Veloz</p>
-                        <p class="text-sm text-slate-600">Memoriza clasificaciones, mnemotecnias clave y perlas de examen de manera rápida.</p>
-                    </button>
-
-                    <!-- Opción 4: Laboratorio IA Gemini (NUEVO) -->
-                    <button onclick="changeView('gemini-ai')" class="group text-left p-6 rounded-xl border border-gold/60 bg-amber-50/40 hover:bg-white hover:shadow-xl hover:border-amber-500 transition-all duration-300 relative">
-                        <span class="absolute top-3 right-3 text-xs bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">✨ IA</span>
-                        <div class="w-12 h-12 rounded-lg bg-gradient-to-tr from-indigo-700 to-amber-500 text-white flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform shadow-md">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-indigo-950 mb-2">Laboratorio IA</h3>
-                        <p class="text-xs text-indigo-700 mb-3">Motor de IA Gemini</p>
-                        <p class="text-sm text-slate-600">Genera desafíos interactivos de examen y analiza tus propios casos en tiempo real.</p>
+                        <p class="text-sm text-slate-600">Memoriza clasificaciones, mnemotecnias clave y perlas de examen antes de luchar.</p>
                     </button>
                 </div>
             </div>
@@ -140,154 +197,215 @@
             <!-- Tabla de Progreso Académico -->
             <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
                 <h3 class="text-xl font-bold color-navy mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-chart-line text-gold"></i> Tu Hoja de Rendimiento Académico
+                    <i class="fa-solid fa-chart-line text-gold"></i> Tu Hoja de Batalla
                 </h3>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                     <div class="p-4 bg-slate-50 rounded-lg">
                         <p class="text-2xl font-bold color-navy" id="stat-questions-answered">0/21</p>
-                        <p class="text-xs text-slate-500 uppercase mt-1">Preguntas Completadas</p>
+                        <p class="text-xs text-slate-500 uppercase mt-1">Hits Asestados</p>
                     </div>
                     <div class="p-4 bg-slate-50 rounded-lg">
                         <p class="text-2xl font-bold text-emerald-700" id="stat-clinical-cases">0/3</p>
-                        <p class="text-xs text-slate-500 uppercase mt-1">Casos Resueltos</p>
+                        <p class="text-xs text-slate-500 uppercase mt-1">Expedientes Completados</p>
                     </div>
                     <div class="p-4 bg-slate-50 rounded-lg">
                         <p class="text-2xl font-bold text-amber-600" id="stat-cards-learned">0</p>
-                        <p class="text-xs text-slate-500 uppercase mt-1">Conceptos Memorizados</p>
+                        <p class="text-xs text-slate-500 uppercase mt-1">Conceptos Dominados</p>
                     </div>
                     <div class="p-4 bg-slate-50 rounded-lg">
                         <p class="text-2xl font-bold text-indigo-700" id="stat-win-rate">0%</p>
-                        <p class="text-xs text-slate-500 uppercase mt-1">Precisión de Respuesta</p>
+                        <p class="text-xs text-slate-500 uppercase mt-1">Precisión de Combate</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- PANTALLA 2: MAPA DE LA RUTA DEL CICLO VITAL -->
+        <!-- PANTALLA 2: MAPA DE LA RUTA DEL CICLO VITAL (HILL CLIMBER) -->
         <div id="view-adventure" class="view-panel hidden space-y-6 py-4">
             <div class="flex items-center justify-between">
                 <button onclick="changeView('home')" class="text-navy hover:text-gold flex items-center gap-2 font-semibold">
                     <i class="fa-solid fa-arrow-left"></i> Volver al Menú Principal
                 </button>
-                <span class="text-sm font-semibold color-navy bg-gold/20 px-3 py-1 rounded-full">Modo: Ruta del Ciclo Vital</span>
+                <span class="text-sm font-semibold color-navy bg-gold/20 px-3 py-1 rounded-full">Progresión del Sendero</span>
             </div>
 
             <div class="bg-white rounded-xl shadow-xl p-6 border border-slate-200">
-                <h2 class="text-2xl font-bold color-navy mb-2 text-center">La Línea Temporal de la Existencia</h2>
-                <p class="text-sm text-slate-500 text-center mb-8">Completa cada etapa para avanzar. Consigue XP y mantén tus vidas a salvo.</p>
+                <h2 class="text-2xl font-bold color-navy mb-2 text-center">El Sendero Hacia la Cúspide del Ciclo Vital</h2>
+                <p class="text-sm text-slate-500 text-center mb-8">Derrota al monstruo de cada etapa para avanzar y subir por la colina.</p>
                 
-                <!-- Mapa Interactivo en Formato Línea Temporal Vertical/Horizontal -->
-                <div class="relative flex flex-col gap-6 md:gap-8 max-w-xl mx-auto py-4">
-                    <!-- Línea conectora -->
-                    <div class="absolute left-8 top-4 bottom-4 w-1 bg-slate-200 -z-0"></div>
+                <!-- Sendero Visual de Montaña / Colina -->
+                <div class="relative max-w-2xl mx-auto py-8 bg-gradient-to-b from-indigo-50/50 via-sky-50/40 to-[#FDFCF0]/50 rounded-2xl border border-slate-100 p-6 overflow-hidden">
                     
-                    <!-- Etapa 1 -->
-                    <div class="flex items-start gap-4 relative z-10">
-                        <div id="node-1" class="w-16 h-16 rounded-full bg-navy text-gold border-4 border-white shadow-md flex items-center justify-center text-lg font-bold">1</div>
-                        <div class="flex-1 bg-[#FDFCF0]/80 p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
-                            <div class="flex justify-between items-center mb-1">
-                                <h3 class="font-bold text-navy">Etapa 1: Epistemología y Bases</h3>
-                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800">Básico</span>
-                            </div>
-                            <p class="text-xs text-slate-600 mb-3">Concepción integral, temperamento, carácter y bases epigenéticas del ciclo vital.</p>
-                            <button onclick="startStage(1)" class="bg-navy hover:bg-gold hover:text-navy text-white text-xs font-bold px-3 py-1.5 rounded transition-all">Iniciar Desafío</button>
-                        </div>
-                    </div>
+                    <!-- Fondo Decorativo Montañoso -->
+                    <div class="absolute bottom-0 left-0 right-0 h-40 bg-slate-100/50 border-t border-slate-200 rounded-b-2xl -z-10"></div>
+                    
+                    <!-- Línea Conectora Curva del Sendero -->
+                    <svg class="absolute top-0 left-0 w-full h-full -z-0 pointer-events-none opacity-40" viewBox="0 0 600 700">
+                        <path d="M 100 620 C 350 620, 500 520, 500 440 C 500 360, 150 320, 150 240 C 150 160, 450 120, 300 50" fill="none" stroke="#D4AF37" stroke-width="4" stroke-dasharray="8 8"/>
+                    </svg>
 
-                    <!-- Etapa 2 -->
-                    <div class="flex items-start gap-4 relative z-10">
-                        <div id="node-2" class="w-16 h-16 rounded-full bg-slate-300 text-slate-600 border-4 border-white shadow-md flex items-center justify-center text-lg font-bold">2</div>
-                        <div class="flex-1 bg-[#FDFCF0]/80 p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
-                            <div class="flex justify-between items-center mb-1">
-                                <h3 class="font-bold text-slate-700">Etapa 2: Desarrollo Prenatal y Parto</h3>
-                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800">Intermedio</span>
+                    <!-- Camino Vertical de Nodos de Colina -->
+                    <div class="relative z-10 flex flex-col space-y-12">
+                        
+                        <!-- CÚSPIDE (ETAPA 7) -->
+                        <div class="flex items-center justify-end pr-8 md:pr-16">
+                            <div class="flex items-center gap-4 bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                                <div id="node-7" class="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-bold text-lg border-2 border-dashed border-slate-300">7</div>
+                                <div>
+                                    <h4 class="font-bold text-xs text-slate-800">Cúspide: Adultez Tardía 🐉</h4>
+                                    <p class="text-[10px] text-slate-500">Jefe final: El Dragón del Olvido</p>
+                                    <button id="btn-stage-7" onclick="startStage(7)" class="mt-1 bg-navy hover:bg-gold hover:text-navy text-white text-[10px] font-bold px-2 py-1 rounded transition-all">Pelear</button>
+                                </div>
                             </div>
-                            <p class="text-xs text-slate-600 mb-3">Trimestres gestacionales, teratología, ontogenia emocional y fisiología del parto.</p>
-                            <button id="btn-stage-2" onclick="startStage(2)" class="bg-navy hover:bg-gold hover:text-navy text-white text-xs font-bold px-3 py-1.5 rounded transition-all">Iniciar Desafío</button>
                         </div>
-                    </div>
 
-                    <!-- Etapa 3 -->
-                    <div class="flex items-start gap-4 relative z-10">
-                        <div id="node-3" class="w-16 h-16 rounded-full bg-slate-300 text-slate-600 border-4 border-white shadow-md flex items-center justify-center text-lg font-bold">3</div>
-                        <div class="flex-1 bg-[#FDFCF0]/80 p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
-                            <div class="flex justify-between items-center mb-1">
-                                <h3 class="font-bold text-slate-700">Etapa 3: Infancia Temprana (0-3 años)</h3>
-                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800">Intermedio</span>
+                        <!-- ETAPA 6 -->
+                        <div class="flex items-center justify-start pl-8 md:pl-20">
+                            <div class="flex items-center gap-4 bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                                <div id="node-6" class="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-bold text-lg border-2 border-dashed border-slate-300">6</div>
+                                <div>
+                                    <h4 class="font-bold text-xs text-slate-800">Fase 6: Adultez Intermedia ⏳</h4>
+                                    <p class="text-[10px] text-slate-500">Enemigo: La Sombra del Estancamiento</p>
+                                    <button id="btn-stage-6" onclick="startStage(6)" class="mt-1 bg-navy hover:bg-gold hover:text-navy text-white text-[10px] font-bold px-2 py-1 rounded transition-all">Pelear</button>
+                                </div>
                             </div>
-                            <p class="text-xs text-slate-600 mb-3">Leyes biomecánicas, reflejos del neonato, etapa sensoriomotriz y adquisición del habla.</p>
-                            <button id="btn-stage-3" onclick="startStage(3)" class="bg-navy hover:bg-gold hover:text-navy text-white text-xs font-bold px-3 py-1.5 rounded transition-all">Iniciar Desafío</button>
                         </div>
-                    </div>
 
-                    <!-- Etapa 4 -->
-                    <div class="flex items-start gap-4 relative z-10">
-                        <div id="node-4" class="w-16 h-16 rounded-full bg-slate-300 text-slate-600 border-4 border-white shadow-md flex items-center justify-center text-lg font-bold">4</div>
-                        <div class="flex-1 bg-[#FDFCF0]/80 p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
-                            <div class="flex justify-between items-center mb-1">
-                                <h3 class="font-bold text-slate-700">Etapa 4: Infancia Intermedia (6-11 años)</h3>
-                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-rose-100 text-rose-800">Avanzado</span>
+                        <!-- ETAPA 5 -->
+                        <div class="flex items-center justify-end pr-12 md:pr-24">
+                            <div class="flex items-center gap-4 bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                                <div id="node-5" class="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-bold text-lg border-2 border-dashed border-slate-300">5</div>
+                                <div>
+                                    <h4 class="font-bold text-xs text-slate-800">Fase 5: Juventud Tardía 💼</h4>
+                                    <p class="text-[10px] text-slate-500">Enemigo: El Espectro del Sedentarismo</p>
+                                    <button id="btn-stage-5" onclick="startStage(5)" class="mt-1 bg-navy hover:bg-gold hover:text-navy text-white text-[10px] font-bold px-2 py-1 rounded transition-all">Pelear</button>
+                                </div>
                             </div>
-                            <p class="text-xs text-slate-600 mb-3">Operaciones concretas, moral heterónoma y autónoma, variables del acoso y bullying.</p>
-                            <button id="btn-stage-4" onclick="startStage(4)" class="bg-navy hover:bg-gold hover:text-navy text-white text-xs font-bold px-3 py-1.5 rounded transition-all">Iniciar Desafío</button>
                         </div>
-                    </div>
 
-                    <!-- Etapa 5 -->
-                    <div class="flex items-start gap-4 relative z-10">
-                        <div id="node-5" class="w-16 h-16 rounded-full bg-slate-300 text-slate-600 border-4 border-white shadow-md flex items-center justify-center text-lg font-bold">5</div>
-                        <div class="flex-1 bg-[#FDFCF0]/80 p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
-                            <div class="flex justify-between items-center mb-1">
-                                <h3 class="font-bold text-slate-700">Etapa 5: Juventud Tardía (21-29 años)</h3>
-                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800">Básico</span>
+                        <!-- ETAPA 4 -->
+                        <div class="flex items-center justify-start pl-12 md:pl-24">
+                            <div class="flex items-center gap-4 bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                                <div id="node-4" class="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-bold text-lg border-2 border-dashed border-slate-300">4</div>
+                                <div>
+                                    <h4 class="font-bold text-xs text-slate-800">Fase 4: Infancia Intermedia 👁️</h4>
+                                    <p class="text-[10px] text-slate-500">Enemigo: El Cíclope del Bullying</p>
+                                    <button id="btn-stage-4" onclick="startStage(4)" class="mt-1 bg-navy hover:bg-gold hover:text-navy text-white text-[10px] font-bold px-2 py-1 rounded transition-all">Pelear</button>
+                                </div>
                             </div>
-                            <p class="text-xs text-slate-600 mb-3">Acmé fisiológico de la salud, factores de estilo de vida, teoría relacional de Papalia.</p>
-                            <button id="btn-stage-5" onclick="startStage(5)" class="bg-navy hover:bg-gold hover:text-navy text-white text-xs font-bold px-3 py-1.5 rounded transition-all">Iniciar Desafío</button>
                         </div>
-                    </div>
 
-                    <!-- Etapa 6 -->
-                    <div class="flex items-start gap-4 relative z-10">
-                        <div id="node-6" class="w-16 h-16 rounded-full bg-slate-300 text-slate-600 border-4 border-white shadow-md flex items-center justify-center text-lg font-bold">6</div>
-                        <div class="flex-1 bg-[#FDFCF0]/80 p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
-                            <div class="flex justify-between items-center mb-1">
-                                <h3 class="font-bold text-slate-700">Etapa 6: Adultez Intermedia (40-65 años)</h3>
-                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-rose-100 text-rose-800">Avanzado</span>
+                        <!-- ETAPA 3 -->
+                        <div class="flex items-center justify-end pr-16 md:pr-32">
+                            <div class="flex items-center gap-4 bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                                <div id="node-3" class="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-bold text-lg border-2 border-dashed border-slate-300">3</div>
+                                <div>
+                                    <h4 class="font-bold text-xs text-slate-800">Fase 3: Infancia Temprana 👶</h4>
+                                    <p class="text-[10px] text-slate-500">Enemigo: La Esfinge Sensoriomotriz</p>
+                                    <button id="btn-stage-3" onclick="startStage(3)" class="mt-1 bg-navy hover:bg-gold hover:text-navy text-white text-[10px] font-bold px-2 py-1 rounded transition-all">Pelear</button>
+                                </div>
                             </div>
-                            <p class="text-xs text-slate-600 mb-3">Menopausia y andropausia, inteligencia fluida y cristalizada, generatividad de Erikson.</p>
-                            <button id="btn-stage-6" onclick="startStage(6)" class="bg-navy hover:bg-gold hover:text-navy text-white text-xs font-bold px-3 py-1.5 rounded transition-all">Iniciar Desafío</button>
                         </div>
-                    </div>
 
-                    <!-- Etapa 7 -->
-                    <div class="flex items-start gap-4 relative z-10">
-                        <div id="node-7" class="w-16 h-16 rounded-full bg-slate-300 text-slate-600 border-4 border-white shadow-md flex items-center justify-center text-lg font-bold">7</div>
-                        <div class="flex-1 bg-[#FDFCF0]/80 p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
-                            <div class="flex justify-between items-center mb-1">
-                                <h3 class="font-bold text-slate-700">Etapa 7: Adultez Tardía (65+ años)</h3>
-                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-rose-100 text-rose-800">Avanzado</span>
+                        <!-- ETAPA 2 -->
+                        <div class="flex items-center justify-start pl-16 pl-28">
+                            <div class="flex items-center gap-4 bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                                <div id="node-2" class="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-bold text-lg border-2 border-dashed border-slate-300">2</div>
+                                <div>
+                                    <h4 class="font-bold text-xs text-slate-800">Fase 2: Desarrollo Prenatal ☣️</h4>
+                                    <p class="text-[10px] text-slate-500">Enemigo: El Coloso Teratógeno</p>
+                                    <button id="btn-stage-2" onclick="startStage(2)" class="mt-1 bg-navy hover:bg-gold hover:text-navy text-white text-[10px] font-bold px-2 py-1 rounded transition-all">Pelear</button>
+                                </div>
                             </div>
-                            <p class="text-xs text-slate-600 mb-3">Senescencia biológica, Alzheimer y demencias, integridad del yo, y el modelo adaptativo SOC.</p>
-                            <button id="btn-stage-7" onclick="startStage(7)" class="bg-navy hover:bg-gold hover:text-navy text-white text-xs font-bold px-3 py-1.5 rounded transition-all">Iniciar Desafío</button>
                         </div>
+
+                        <!-- BASE (ETAPA 1) -->
+                        <div class="flex items-center justify-center">
+                            <div class="flex items-center gap-4 bg-white p-4 rounded-xl border-2 border-gold shadow-md">
+                                <div id="node-1" class="w-12 h-12 rounded-full bg-navy text-gold flex items-center justify-center font-bold text-lg">1</div>
+                                <div>
+                                    <h4 class="font-bold text-xs text-navy">Base: Epistemología y Herencia 🧬</h4>
+                                    <p class="text-[10px] text-slate-500">Enemigo: La Quimera Epigenética</p>
+                                    <button onclick="startStage(1)" class="mt-1 bg-navy hover:bg-gold hover:text-navy text-white text-[10px] font-bold px-2 py-1 rounded transition-all">Pelear</button>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- PANTALLA 3: TABLERO DE PREGUNTAS (TRIVIA INTERACTIVA) -->
+        <!-- PANTALLA 3: TABLERO DE PREGUNTAS (ARENA DE COMBATE RPG VISUAL) -->
         <div id="view-trivia" class="view-panel hidden space-y-6 py-4">
             <div class="flex items-center justify-between">
                 <button onclick="changeView('adventure')" class="text-navy hover:text-gold flex items-center gap-2 font-semibold">
-                    <i class="fa-solid fa-arrow-left"></i> Volver a la Ruta
+                    <i class="fa-solid fa-arrow-left"></i> Huir a la Colina (Retirada)
                 </button>
                 <div class="flex items-center gap-4">
-                    <span id="trivia-stage-indicator" class="text-xs font-bold uppercase tracking-wider bg-navy text-gold px-3 py-1 rounded">Etapa X</span>
-                    <span id="trivia-progress" class="text-sm font-semibold text-slate-500">Pregunta Y/Z</span>
+                    <span id="trivia-stage-indicator" class="text-xs font-bold uppercase tracking-wider bg-navy text-gold px-3 py-1 rounded">Fase X</span>
+                    <span id="trivia-progress" class="text-sm font-semibold text-slate-500">Golpes: Y/Z</span>
                 </div>
             </div>
 
-            <!-- Panel de Pregunta -->
+            <!-- --- ARENA DE COMBATE VISUAL --- -->
+            <div class="bg-slate-900 border-b-4 border-gold rounded-2xl shadow-2xl p-6 relative overflow-hidden h-72 flex flex-col justify-between">
+                <!-- Fondo espacial / estrellado estilo juego retro -->
+                <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800 via-slate-950 to-black opacity-90 -z-10"></div>
+                
+                <!-- Barras de Salud superiores -->
+                <div class="flex justify-between items-center z-10">
+                    <!-- Salud del Jugador -->
+                    <div class="w-2/5">
+                        <div class="flex justify-between items-center text-[10px] text-slate-300 font-bold mb-1">
+                            <span>🎓 ESTUDIANTE</span>
+                            <span id="hero-hp-txt">5 / 5 VIDAS</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden border border-slate-700">
+                            <div id="hero-hp-bar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- VS -->
+                    <div class="text-gold font-extrabold font-mono text-lg animate-pulse">VS</div>
+                    
+                    <!-- Salud del Monstruo -->
+                    <div class="w-2/5">
+                        <div class="flex justify-between items-center text-[10px] text-slate-300 font-bold mb-1">
+                            <span id="monster-name-tag" class="uppercase">MONSTRUO</span>
+                            <span id="monster-hp-txt">100 HP</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden border border-slate-700">
+                            <div id="monster-hp-bar" class="bg-rose-500 h-full transition-all duration-300" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campo de batalla con los Avatares -->
+                <div class="flex justify-between items-end h-32 relative z-10 px-8">
+                    <!-- MONITO ESTUDIANTE (HÉROE) -->
+                    <div id="rpg-hero" class="text-7xl select-none animate-idle-hero transition-all duration-150 relative">
+                        🎓
+                        <!-- Espada o aura -->
+                        <span class="absolute -right-4 top-2 text-2xl animate-pulse">⚔️</span>
+                    </div>
+
+                    <!-- TEXTOS FLOTANTES DE DAÑO (DINÁMICOS) -->
+                    <div class="absolute inset-0 flex justify-center items-center pointer-events-none">
+                        <span id="float-damage-text" class="hidden text-3xl font-extrabold text-red-500 tracking-wider absolute drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-20"></span>
+                    </div>
+
+                    <!-- MONSTRUO ENEMY -->
+                    <div id="rpg-monster" class="text-7xl select-none animate-idle scale-x-[-1] transition-all">
+                        🧬
+                    </div>
+                </div>
+
+                <!-- Piso del campo de batalla -->
+                <div class="h-4 bg-slate-950/60 w-full rounded-full"></div>
+            </div>
+
+            <!-- Panel de Pregunta y Alternativas -->
             <div class="bg-white rounded-xl shadow-xl p-6 md:p-8 border border-slate-200 relative">
                 <!-- Barra de Progreso Interna -->
                 <div class="w-full bg-slate-100 rounded-full h-2 mb-6">
@@ -296,7 +414,18 @@
 
                 <!-- Enunciado de Pregunta -->
                 <div class="mb-8">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Enunciado del Examen</span>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1 flex items-center justify-between">
+                        <span>Duelo Teórico</span>
+                        <!-- Botón usar Pistas / Comodines dentro de la trivia -->
+                        <div class="flex gap-2">
+                            <button id="btn-use-hint" onclick="useHint()" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] font-bold px-2 py-1 rounded border border-amber-300 transition-all flex items-center gap-1">
+                                🔮 Pista (<span id="btn-hints-count">0</span>)
+                            </button>
+                            <button id="btn-use-skip" onclick="useSkip()" class="bg-violet-100 hover:bg-violet-200 text-violet-800 text-[10px] font-bold px-2 py-1 rounded border border-violet-300 transition-all flex items-center gap-1">
+                                ⏭️ Saltar (<span id="btn-skips-count">0</span>)
+                            </button>
+                        </div>
+                    </span>
                     <h3 id="trivia-question-text" class="text-xl md:text-2xl font-bold color-navy leading-relaxed">¿Cuál es el principio regulador...?</h3>
                 </div>
 
@@ -316,7 +445,7 @@
                     </div>
                     <div class="mt-4 flex justify-end">
                         <button id="btn-next-question" onclick="nextQuestion()" class="bg-navy hover:bg-gold hover:text-navy text-white font-bold px-6 py-2 rounded-lg text-sm transition-all shadow-md">
-                            Siguiente Pregunta <i class="fa-solid fa-arrow-right ml-2"></i>
+                            Siguiente Turno <i class="fa-solid fa-arrow-right ml-2"></i>
                         </button>
                     </div>
                 </div>
@@ -453,144 +582,6 @@
             </div>
         </div>
 
-        <!-- PANTALLA 6: LABORATORIO DE INTELIGENCIA ARTIFICIAL (GEMINI API INTEGRADA) -->
-        <div id="view-gemini-ai" class="view-panel hidden space-y-6 py-4">
-            <div class="flex items-center justify-between">
-                <button onclick="changeView('home')" class="text-navy hover:text-gold flex items-center gap-2 font-semibold">
-                    <i class="fa-solid fa-arrow-left"></i> Volver al Menú Principal
-                </button>
-                <span class="text-sm font-semibold text-indigo-900 bg-indigo-100 px-3 py-1 rounded-full flex items-center gap-1.5">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i> Motor Gemini 2.5 Flash
-                </span>
-            </div>
-
-            <!-- Panel de Doble Pestaña: Diagnóstico e Intervención IA & Preguntas Dinámicas -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                
-                <!-- Tarjeta 1: Analizador Clínico Personalizado -->
-                <div class="bg-white rounded-2xl shadow-xl p-6 border border-slate-200 flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-xl font-bold text-indigo-950 mb-2 flex items-center gap-2">
-                            <i class="fa-solid fa-user-doctor text-indigo-600"></i> Analizador Clínico IA
-                        </h3>
-                        <p class="text-xs text-slate-500 mb-4">Escribe un caso o síntoma para recibir una hipótesis analítica y plan de tratamiento formulado por el motor de Gemini.</p>
-                        
-                        <!-- Textarea del Caso -->
-                        <div class="space-y-3">
-                            <label class="block text-xs font-bold text-slate-600 uppercase">Descripción de la Problemática del Paciente:</label>
-                            <textarea id="ai-case-input" rows="6" class="w-full p-3 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-indigo-600 bg-slate-50/50" placeholder="Ej: Mujer de 52 años, reporta insomnio recurrente, sofocos intensos y llanto fácil. Siente que su rol como madre ha terminado pues su último hijo se independizó..."></textarea>
-                        </div>
-
-                        <!-- Plantillas rápidas -->
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            <span class="text-xs text-slate-400 self-center">Plantillas:</span>
-                            <button onclick="fillAICaseTemplate(1)" class="text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200 transition-all">S. Sándwich (Carlos)</button>
-                            <button onclick="fillAICaseTemplate(2)" class="text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200 transition-all">Fobia Escolar (8 años)</button>
-                            <button onclick="fillAICaseTemplate(3)" class="text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200 transition-all">Sarcopenia y SOC (74 años)</button>
-                        </div>
-                    </div>
-
-                    <!-- Botón de Análisis -->
-                    <div class="mt-6 pt-4 border-t border-slate-100">
-                        <button id="btn-analyze-case-ai" onclick="analyzeCaseWithAI()" class="w-full bg-gradient-to-r from-indigo-700 to-indigo-900 hover:from-indigo-800 hover:to-indigo-950 text-white font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> Analizar Caso Clínico ✨
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Tarjeta 2: Generador de Preguntas de Examen IA -->
-                <div class="bg-white rounded-2xl shadow-xl p-6 border border-slate-200 flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-xl font-bold text-amber-900 mb-2 flex items-center gap-2">
-                            <i class="fa-solid fa-graduation-cap text-amber-600"></i> Generador de Desafíos IA
-                        </h3>
-                        <p class="text-xs text-slate-500 mb-4">Gemini generará al vuelo preguntas complejas estilo examen universitario según la etapa del desarrollo que selecciones.</p>
-                        
-                        <!-- Selección de Etapa -->
-                        <div class="space-y-3">
-                            <label class="block text-xs font-bold text-slate-600 uppercase">Selecciona el Eje Temático del Desafío:</label>
-                            <select id="ai-stage-select" class="w-full p-3 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-amber-500 bg-slate-50/50">
-                                <option value="Epistemología del desarrollo integral (Temperamento y Epigenética)">Bases Epistemológicas y Epigenética</option>
-                                <option value="Desarrollo prenatal y teratólogos críticos">Desarrollo Prenatal y Teratología</option>
-                                <option value="Desarrollo psicomotor y sensorio-motor de 0 a 3 años de Papalia">Infancia Temprana (0-3 años)</option>
-                                <option value="Operaciones concretas y desarrollo de juicio moral de Piaget/Kohlberg">Infancia Intermedia (6-11 años)</option>
-                                <option value="Rendimiento del acmé y estilos de vida en la juventud tardía">Juventud Tardía (21-29 años)</option>
-                                <option value="Menopausia, andropausia e inteligencia fluida/cristalizada">Adultez Intermedia (40-65 años)</option>
-                                <option value="Modelo SOC de Baltes, Alzheimer y senescencia fisiológica">Adultez Tardía (65+ años)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Botón de Generar -->
-                    <div class="mt-6 pt-4 border-t border-slate-100">
-                        <button id="btn-generate-question-ai" onclick="generateQuestionWithAI()" class="w-full bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm">
-                            <i class="fa-solid fa-brain"></i> Crear Desafío de Examen ✨
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PANEL DE CARGA / RUNNING LOADER (COMPARTIDO) -->
-            <div id="ai-loading-container" class="hidden bg-white rounded-2xl shadow-lg border border-indigo-100 p-8 text-center animate-pulse">
-                <div class="flex flex-col items-center justify-center space-y-4">
-                    <div class="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p id="ai-loading-text" class="text-indigo-900 font-bold text-base">Gemini está analizando la información científica...</p>
-                    <p class="text-xs text-slate-400">Este proceso consulta modelos de lenguaje avanzados para un diagnóstico óptimo.</p>
-                </div>
-            </div>
-
-            <!-- RESULTADO DEL ANÁLISIS CLÍNICO IA -->
-            <div id="ai-analysis-result-container" class="hidden bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-                <div class="bg-indigo-950 text-white px-6 py-4 flex justify-between items-center border-b-4 border-gold">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-file-invoice-dollar text-gold"></i>
-                        <h4 class="font-bold text-base">Dictamen Científico de IA Gemini</h4>
-                    </div>
-                    <button onclick="closeAIResult('ai-analysis-result-container')" class="text-slate-300 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <!-- Bloque de Contenido de Respuesta -->
-                <div id="ai-analysis-text-content" class="p-6 prose prose-slate max-w-none text-slate-700 space-y-4 text-sm leading-relaxed">
-                    <!-- Aquí se inyecta el HTML limpio generado por Gemini -->
-                </div>
-            </div>
-
-            <!-- RESULTADO DEL DESAFÍO IA (PREGUNTA DINÁMICA DE TRIVIA) -->
-            <div id="ai-quiz-container" class="hidden bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-                <div class="bg-amber-950 text-white px-6 py-4 flex justify-between items-center border-b-4 border-gold">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-fire text-amber-500"></i>
-                        <h4 class="font-bold text-base">Desafío Dinámico Generado por IA</h4>
-                    </div>
-                    <button onclick="closeAIResult('ai-quiz-container')" class="text-slate-300 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                
-                <div class="p-6 space-y-6">
-                    <!-- Enunciado -->
-                    <div>
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Enunciado de Examen Directo</span>
-                        <h3 id="ai-quiz-question" class="text-lg md:text-xl font-bold text-indigo-950"></h3>
-                    </div>
-
-                    <!-- Opciones de Respuesta -->
-                    <div id="ai-quiz-options" class="grid grid-cols-1 gap-3">
-                        <!-- Botones Dinámicos de Opción -->
-                    </div>
-
-                    <!-- Retroalimentación Dinámica -->
-                    <div id="ai-quiz-feedback" class="hidden p-4 rounded-xl border border-slate-200 transition-all duration-300">
-                        <div class="flex items-start gap-3">
-                            <span id="ai-quiz-feedback-icon" class="text-2xl"></span>
-                            <div>
-                                <h5 id="ai-quiz-feedback-title" class="font-bold text-sm"></h5>
-                                <p id="ai-quiz-feedback-text" class="text-xs text-slate-600 mt-1 leading-relaxed"></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
         <!-- PANTALLA 7: RESULTADOS Y RETROALIMENTACIÓN -->
         <div id="view-results" class="view-panel hidden space-y-8 py-4">
             <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-12 border border-slate-200 text-center relative overflow-hidden">
@@ -598,8 +589,8 @@
                     <i class="fa-solid fa-graduation-cap"></i>
                 </div>
                 
-                <h2 class="text-3xl md:text-5xl font-bold color-navy mb-2">¡Felicitaciones Académicas!</h2>
-                <p class="text-slate-500 mb-8" id="result-subtitle">Has concluido tu evaluación del Ciclo Vital</p>
+                <h2 class="text-3xl md:text-5xl font-bold color-navy mb-2">¡Cúspide Alcanzada!</h2>
+                <p class="text-slate-500 mb-8" id="result-subtitle">Has derrotado a todas las sombras del Ciclo Vital</p>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-2xl mx-auto mb-10">
                     <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
@@ -611,7 +602,7 @@
                         <p class="text-3xl font-extrabold text-emerald-700 mt-1" id="result-accuracy">85%</p>
                     </div>
                     <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                        <span class="text-xs text-slate-500 uppercase tracking-wide">Grado Académico</span>
+                        <span class="text-xs text-slate-500 uppercase tracking-wide">Grado Clínico</span>
                         <p class="text-lg font-bold text-amber-700 mt-2" id="result-rank">Especialista en Desarrollo</p>
                     </div>
                 </div>
@@ -633,6 +624,59 @@
 
     </main>
 
+    <!-- MODAL POP-UP DE RULETA DE RECOMPENSAS -->
+    <div id="roulette-modal" class="hidden fixed inset-0 bg-slate-900/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl border-4 border-gold w-full max-w-lg text-center p-6 md:p-8 animate-in fade-in zoom-in duration-300 relative overflow-hidden">
+            
+            <!-- Confeti o efectos decorativos -->
+            <div class="absolute -top-10 -left-10 text-4xl animate-bounce duration-1000">🎉</div>
+            <div class="absolute -top-10 -right-10 text-4xl animate-bounce duration-700">✨</div>
+            <div class="absolute -bottom-10 -left-10 text-4xl animate-bounce duration-500">🏆</div>
+            <div class="absolute -bottom-10 -right-10 text-4xl animate-bounce duration-300">💥</div>
+
+            <h2 class="text-2xl md:text-3.5xl font-extrabold text-navy mb-1 uppercase tracking-tight">¡ENEMIGO DERROTADO!</h2>
+            <p class="text-slate-500 text-xs md:text-sm mb-6">Tu sabiduría te ha dado la victoria. ¡Gira la Ruleta del Destino para reclamar tu premio!</p>
+
+            <!-- Estructura visual de la ruleta -->
+            <div class="relative w-64 h-64 md:w-72 md:h-72 mx-auto mb-8 flex items-center justify-center">
+                <!-- Flecha indicadora superior -->
+                <div class="absolute -top-3 w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[22px] border-t-gold z-30 drop-shadow-md"></div>
+                
+                <!-- Rueda circular -->
+                <div id="wheel-element" class="roulette-wheel w-full h-full rounded-full relative flex items-center justify-center transform transition-transform duration-[4000ms]">
+                    <!-- Pin central -->
+                    <div class="w-10 h-10 rounded-full bg-navy border-4 border-gold z-20 flex items-center justify-center shadow-md">
+                        <div class="w-2.5 h-2.5 rounded-full bg-white"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leyenda explicativa de colores -->
+            <div class="grid grid-cols-2 gap-2 text-[10px] md:text-xs text-left max-w-md mx-auto mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#10B981] inline-block"></span> <span>Vida Extra (20%)</span></div>
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#3B82F6] inline-block"></span> <span>Inmunidad 5m (5%)</span></div>
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#F59E0B] inline-block"></span> <span>Pista 50:50 (25%)</span></div>
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#8B5CF6] inline-block"></span> <span>Saltar Pregunta (25%)</span></div>
+                <div class="flex items-center gap-1.5 col-span-2 justify-center border-t border-slate-200/60 pt-1.5 mt-0.5"><span class="w-3 h-3 rounded-full bg-[#6B7280] inline-block"></span> <span>La Cruda Realidad (25%)</span></div>
+            </div>
+
+            <!-- Botón de Giro -->
+            <button id="btn-spin-wheel" onclick="spinWheel()" class="w-full bg-gradient-to-r from-amber-500 via-gold to-amber-600 hover:from-amber-600 hover:to-amber-700 text-navy font-black py-4 rounded-2xl shadow-xl transition-all tracking-wider text-sm uppercase transform hover:scale-[1.02] active:scale-[0.98]">
+                🔮 ¡GIRAR RULETA DEL DESTINO! 🔮
+            </button>
+
+            <!-- Contenedor del premio revelado -->
+            <div id="wheel-prize-result" class="hidden mt-6 bg-slate-50 p-4 rounded-2xl border-2 border-dashed border-gold text-center animate-in fade-in duration-300">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Recompensa Otorgada</p>
+                <h3 id="prize-title" class="text-lg md:text-xl font-black text-navy mt-1"></h3>
+                <p id="prize-desc" class="text-xs text-slate-600 mt-1 leading-relaxed italic"></p>
+                <button onclick="closeRouletteAndProceed()" class="mt-4 bg-navy hover:bg-gold hover:text-navy text-white text-xs font-bold px-6 py-2 rounded-lg shadow transition-all">
+                    Continuar Aventura <i class="fa-solid fa-chevron-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- FOOTER GLOBAL -->
     <footer class="bg-slate-900 text-slate-400 text-center py-6 text-xs border-t border-slate-800">
         <p>© 2026 Viaje por el Ciclo Vital. Desarrollado con rigurosidad científica basándose en Papalia, Harrison y Erikson.</p>
@@ -641,7 +685,18 @@
 
     <!-- LOGIC DEL JUEGO (JAVASCRIPT) -->
     <script>
-        // --- 1. BASE DE DATOS DE PREGUNTAS (TRIVIA AVANZADA) ---
+        // --- 1. CONFIGURACIÓN DE LOS MONSTRUOS POR ETAPA ---
+        const stageMonsters = {
+            1: { name: "Quimera Epigenética", emoji: "🧬", hp: 100 },
+            2: { name: "Coloso Teratógeno", emoji: "☣️", hp: 100 },
+            3: { name: "Esfinge Sensoriomotriz", emoji: "👶", hp: 100 },
+            4: { name: "Cíclope del Bullying", emoji: "👁️", hp: 100 },
+            5: { name: "Espectro del Sedentarismo", emoji: "💼", hp: 100 },
+            6: { name: "Sombra del Estancamiento", emoji: "⏳", hp: 100 },
+            7: { name: "Dragón del Olvido", emoji: "🐉", hp: 100 }
+        };
+
+        // --- 2. BASE DE DATOS DE PREGUNTAS (TRIVIA AVANZADA) ---
         const questionDatabase = {
             1: [ // Bases Conceptuales
                 {
@@ -671,21 +726,21 @@
             2: [ // Desarrollo Prenatal
                 {
                     question: "¿En qué etapa del primer trimestre se inicia la organogénesis de las tres capas primarias (ectodermo, mesodermo y endodermo)?",
-                    options: ["Etapa Fetal Tardía (semanas 9-12)", "Etapa Germinal (semanas 1-2)", "Etapa Embrionaria (semanas 3-8)", "Etapa Perinatal (semanas 13-16)"],
+                    options: ["Etapa Fetal Tardía (semanas 9-12)", "Etapa Germinal (semanas 1-2)", "Etapa Embryonaria (semanas 3-8)", "Etapa Perinatal (semanas 13-16)"],
                     answerIndex: 2,
                     explanation: "Durante la etapa embrionaria (semanas 3-8) ocurre la formación crítica de órganos principales y diferenciación celular."
-                },
-                {
-                    question: "¿Cuál es el primer sentido que emerge en la ontogenia fetal humana intrauterina?",
-                    options: ["Vía Auditiva", "Sentido del Tacto", "Vía Visual", "Procesamiento Olfativo"],
-                    answerIndex: 1,
-                    explanation: "El tacto es el primer sentido en emerger evolutivamente, seguido por el gusto y olfato al deglutir líquido amniótico."
                 },
                 {
                     question: "La liberación prolongada de cortisol materno por estrés crónico atraviesa la placenta y altera principalmente:",
                     options: ["El cierre epifisario óseo fetal", "El eje hipotálamo-hipófisis-adrenal (HHA)", "La diferenciación sexual fenotípica", "Los reflejos primitivos de succión"],
                     answerIndex: 1,
                     explanation: "El estrés materno eleva el cortisol y las catecolaminas, alterando el eje HHA fetal y asociándose con bajo peso y reactividad posnatal."
+                },
+                {
+                    question: "¿Cuál es el primer sentido que emerge en la ontogenia fetal humana intrauterina?",
+                    options: ["Vía Auditiva", "Sentido del Tacto", "Vía Visual", "Procesamiento Olfativo"],
+                    answerIndex: 1,
+                    explanation: "El tacto es el primer sentido en emerger evolutivamente, seguido por el gusto y olfato al deglutir líquido amniótico."
                 }
             ],
             3: [ // Infancia Temprana
@@ -707,7 +762,7 @@
                         "Doble silabeo como 'ba-ba-ba'.",
                         "Uso de un fonema único con intención semántica completa (ej: 'ba' para decir 'quiero salir').",
                         "Sintaxis rudimentaria de tipo telegráfico como 'más leche'.",
-                        "Uso estructurado de oraciones subordinadas."
+                        "Uso de un lenguaje de alto nivel con nexos y oraciones complejas."
                     ],
                     answerIndex: 1,
                     explanation: "La holofrase es el uso de una palabra o fonema único para representar una idea completa."
@@ -715,7 +770,7 @@
             ],
             4: [ // Infancia Intermedia
                 {
-                    question: "¿En qué consiste la 'descentración cognitiva' que disminuye el egocentrismo en la etapa de operaciones concretas?",
+                    question: "La 'descentración cognitiva' que disminuye el egocentrismo en la etapa de operaciones concretas es:",
                     options: [
                         "La habilidad de ordenar elementos según dimensiones crecientes.",
                         "La capacidad de enfocar múltiples variables de un problema simultáneamente.",
@@ -830,7 +885,7 @@
             ]
         };
 
-        // --- 2. BASE DE DATOS DE CASOS CLÍNICOS (SIMULADOR) ---
+        // --- 3. BASE DE DATOS DE CASOS CLÍNICOS (SIMULADOR) ---
         const clinicalCases = [
             {
                 patient: "Carlos",
@@ -981,27 +1036,11 @@
             }
         ];
 
-        // --- 3. BASE DE DATOS DE FLASHCARDS ---
-        const flashcardsDataset = [
-            { tag: "Bases", question: "¿Qué es la Epigenética?", answer: "Modificaciones químicas en la expresión de los genes provocadas por factores ambientales (estrés, dieta) sin alterar la secuencia original de nucleótidos del ADN." },
-            { tag: "Bases", question: "Temperamento vs. Carácter", answer: "El temperamento es la base biológica heredada emocionalmente reactiva (SNC). El carácter es la estructura aprendida a través de la educación y cultura." },
-            { tag: "Prenatal", question: "Periodo Crítico de Teratógenos", answer: "El primer trimestre (etapa embrionaria, semanas 3-8) debido al proceso de organogénesis acelerada donde se diferencian las capas celulares." },
-            { tag: "Prenatal", question: "Parto Natural vs. Cesárea", answer: "El parto natural es vaginal con fases de dilatación, expulsión y alumbramiento. La cesárea es cirugía abdominal y uterina ante riesgos médicos absolutos." },
-            { tag: "Infancia Temprana", question: "Ley Cefalocaudal", answer: "Mnemotecnia: Cabeza a Pies. El control motriz se adquiere de arriba hacia abajo (sostén cefálico antes de la bipedestación)." },
-            { tag: "Infancia Temprana", question: "Mnemotecnia CE-PRO-DI", answer: "Leyes físicas: CEfalocaudal, PROximodistal y DIferenciación (respuestas masivas que se especializan con la maduración)." },
-            { tag: "Infancia Intermedia", question: "Operaciones Concretas (Piaget)", answer: "Pensamiento lógico aplicado a realidades tangibles. Dominio de la Conservación, Clasificación categorial y Seriación de escalas." },
-            { tag: "Infancia Intermedia", question: "Bullying y Salud Escolar", answer: "Acoso escolar reiterado con asimetría de poder. Genera sintomatología internante: ansiedad, somatizaciones depresivas e ideación suicida." },
-            { tag: "Adultez Intermedia", question: "Generación Sándwich", answer: "Adultos de 40-65 años con sobrecarga crónica de rol al proveer simultáneamente cuidado a padres ancianos dependientes e hijos adolescentes." },
-            { tag: "Adultez Intermedia", question: "Inteligencia Fluida vs. Cristalizada", answer: "La fluida (procesamiento rápido, abstracto) declina lentamente por envejecimiento cerebral. La cristalizada (experiencia, vocabulario) se mantiene estable o mejora." },
-            { tag: "Adultez Tardía", question: "Modelo S.O.C. (Baltes)", answer: "Selección (limitar metas), Optimización (maximizar recursos) y Compensación (usar prótesis o estrategias ante la pérdida) para envejecer con éxito." },
-            { tag: "Adultez Tardía", question: "Alzheimer vs. Normalidad", answer: "La normalidad tiene olvidos de trabajo por enlentecimiento. El Alzheimer es neurodegenerativo (beta-amiloide/tau) con afasia, apraxia y pérdida funcional." }
-        ];
-
         // --- 4. ESTADO DE LA APLICACIÓN (STATE) ---
         let state = {
             currentView: 'home',
             score: 0,
-            lives: 3,
+            lives: 5, // Incrementado a 5 vidas máximas según solicitud
             completedStages: [1], // Etapa 1 desbloqueada por defecto
             activeStage: null,
             activeQuestionIndex: 0,
@@ -1022,9 +1061,13 @@
             activeCardIndex: 0,
             isCardFlipped: false,
 
-            // Estado para el examen dinámico generado por la IA de Gemini
-            activeAIQuestion: null,
-            hasAnsweredAIQuestion: false
+            // Estado de los puntos de vida del Monstruo por etapa
+            monsterHP: 100,
+
+            // INVENTARIO DE AYUDAS ADQUIRIDAS EN LA RULETA
+            hintsAvailable: 0,
+            skipsAvailable: 0,
+            immunityUntil: 0 // Timestamp de expiración
         };
 
         // --- 5. ENRUTADOR DE VISTAS (SPA CONTROLLER) ---
@@ -1039,6 +1082,7 @@
             updateScoreUI();
             updateHeartsUI();
             updateStatsUI();
+            updateInventoryUI();
 
             if (viewId === 'adventure') {
                 renderAdventureMap();
@@ -1053,10 +1097,35 @@
         }
 
         function loseLife() {
+            // Verificar si el jugador cuenta con Inmunidad activa
+            if (state.immunityUntil && Date.now() < state.immunityUntil) {
+                const impactText = document.getElementById('float-damage-text');
+                if (impactText) {
+                    impactText.innerText = "¡INMUNE! 🛡️";
+                    impactText.className = "text-3xl font-extrabold text-blue-400 tracking-wider absolute drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-20 floating-impact";
+                    impactText.classList.remove('hidden');
+                    setTimeout(() => {
+                        impactText.classList.add('hidden');
+                    }, 1000);
+                }
+                return; // Bloquea la pérdida de vida
+            }
+
             state.lives = Math.max(0, state.lives - 1);
             updateHeartsUI();
+            
+            // Reflejar daño en la barra del Héroe
+            const heroHpPct = (state.lives / 5) * 100;
+            const heroHpBar = document.getElementById('hero-hp-bar');
+            if (heroHpBar) {
+                heroHpBar.style.width = `${heroHpPct}%`;
+                document.getElementById('hero-hp-txt').innerText = `${state.lives} / 5 VIDAS`;
+            }
+
             if (state.lives === 0) {
-                showGameOver();
+                setTimeout(() => {
+                    showGameOver();
+                }, 1000);
             }
         }
 
@@ -1067,7 +1136,7 @@
         function updateHeartsUI() {
             const container = document.getElementById('heart-container');
             container.innerHTML = '';
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 5; i++) {
                 const heart = document.createElement('i');
                 heart.className = i < state.lives ? 'fa-solid fa-heart text-rose-500 text-lg' : 'fa-regular fa-heart text-slate-400 text-lg';
                 container.appendChild(heart);
@@ -1075,11 +1144,11 @@
         }
 
         function updatePlayerTitle() {
-            let title = "Estudiante de Pregrado";
-            if (state.score >= 300) title = "Ayudante de Cátedra";
-            if (state.score >= 600) title = "Interno de Psicología";
-            if (state.score >= 1000) title = "Residente Clínico";
-            if (state.score >= 1500) title = "Especialista del Ciclo Vital";
+            let title = "Estudiante";
+            if (state.score >= 300) title = "Auxiliar";
+            if (state.score >= 600) title = "Interno";
+            if (state.score >= 1000) title = "Residente";
+            if (state.score >= 1500) title = "Especialista";
             
             document.getElementById('player-title').innerText = title;
         }
@@ -1093,17 +1162,58 @@
             document.getElementById('stat-win-rate').innerText = `${winRate}%`;
         }
 
-        // --- 7. MÓDULO RUTA DEL CICLO VITAL (TRIVIA) ---
+        // Actualizar interfaz del inventario y temporizadores
+        function updateInventoryUI() {
+            document.getElementById('header-hints-count').innerText = state.hintsAvailable;
+            document.getElementById('header-skips-count').innerText = state.skipsAvailable;
+            
+            const btnHints = document.getElementById('btn-hints-count');
+            const btnSkips = document.getElementById('btn-skips-count');
+            if (btnHints) btnHints.innerText = state.hintsAvailable;
+            if (btnSkips) btnSkips.innerText = state.skipsAvailable;
+
+            // Manejo del reloj de inmunidad
+            const immunityBadge = document.getElementById('header-immunity-timer');
+            if (state.immunityUntil && Date.now() < state.immunityUntil) {
+                immunityBadge.classList.remove('hidden');
+                updateImmunityClock();
+            } else {
+                immunityBadge.classList.add('hidden');
+            }
+        }
+
+        function updateImmunityClock() {
+            const clock = document.getElementById('immunity-clock');
+            if (!clock) return;
+
+            const remaining = state.immunityUntil - Date.now();
+            if (remaining <= 0) {
+                document.getElementById('header-immunity-timer').classList.add('hidden');
+                return;
+            }
+
+            const totalSeconds = Math.ceil(remaining / 1000);
+            const m = Math.floor(totalSeconds / 60);
+            const s = totalSeconds % 60;
+            clock.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+
+            setTimeout(updateImmunityClock, 1000);
+        }
+
+        // --- 7. MÓDULO RUTA DEL CICLO VITAL (TRIVIA + COMBATE RPG) ---
         function renderAdventureMap() {
             for (let i = 1; i <= 7; i++) {
                 const node = document.getElementById(`node-${i}`);
                 const btn = document.getElementById(`btn-stage-${i}`);
                 
                 if (state.completedStages.includes(i)) {
-                    node.className = "w-16 h-16 rounded-full bg-navy text-gold border-4 border-gold shadow-md flex items-center justify-center text-lg font-bold";
+                    // Completada o activa
+                    node.className = "w-12 h-12 rounded-full bg-navy text-gold border-4 border-gold shadow-md flex items-center justify-center text-sm font-bold scale-110 transition-transform animate-pulse";
+                    node.innerHTML = `🎓`;
                     if (btn) btn.disabled = false;
                 } else {
-                    node.className = "w-16 h-16 rounded-full bg-slate-200 text-slate-400 border-4 border-white shadow-md flex items-center justify-center text-lg font-bold";
+                    node.className = "w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-bold text-sm border-2 border-dashed border-slate-300";
+                    node.innerHTML = `${i}`;
                     if (btn) btn.disabled = true;
                 }
             }
@@ -1112,208 +1222,29 @@
         function startStage(stageNum) {
             state.activeStage = stageNum;
             state.activeQuestionIndex = 0;
+            state.monsterHP = 100; // Reset HP del monstruo
             changeView('trivia');
+            
+            // Cargar datos visuales de la batalla
+            const monster = stageMonsters[stageNum];
+            document.getElementById('monster-name-tag').innerText = monster.name;
+            document.getElementById('rpg-monster').innerText = monster.emoji;
+            updateMonsterHPUI();
+            
+            // Sincronizar HP del Héroe (Basado en 5 vidas)
+            const heroHpPct = (state.lives / 5) * 100;
+            document.getElementById('hero-hp-bar').style.width = `${heroHpPct}%`;
+            document.getElementById('hero-hp-txt').innerText = `${state.lives} / 5 VIDAS`;
+
             loadQuestion();
         }
 
-        // --- 8. INTEGRACIÓN DE GEMINI API (LLM) ---
-        const apiKey = "AQ.Ab8RN6K7eEoJhPb3y-nBM7A39eEDFl6HaMJEVzQ0uKqpDVhb0g"; // API Key del usuario preconfigurada para exportación directa
-
-        // Función de llamada a Gemini con reintentos exponenciales
-        async function callGeminiAPI(promptText, systemInstructionText, responseSchema = null) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            
-            const payload = {
-                contents: [{ parts: [{ text: promptText }] }],
-                systemInstruction: { parts: [{ text: systemInstructionText }] }
-            };
-
-            if (responseSchema) {
-                payload.generationConfig = {
-                    responseMimeType: "application/json",
-                    responseSchema: responseSchema
-                };
-            }
-
-            let delay = 1000;
-            for (let attempt = 0; attempt < 5; attempt++) {
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        const outputText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                        if (outputText) {
-                            return outputText;
-                        }
-                        throw new Error("Formato de respuesta inválido o sin texto.");
-                    } else {
-                        throw new Error(`Código de error HTTP: ${response.status}`);
-                    }
-                } catch (error) {
-                    if (attempt === 4) {
-                        throw new Error("No se pudo conectar con el Laboratorio de IA tras 5 intentos. Verifica tu conexión.");
-                    }
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    delay *= 2;
-                }
-            }
-        }
-
-        // Acciones del Laboratorio de IA: Analizar Caso Clínico
-        async function analyzeCaseWithAI() {
-            const caseInput = document.getElementById('ai-case-input').value.trim();
-            if (!caseInput) {
-                alert("Por favor, introduce o selecciona un caso clínico válido para analizar.");
-                return;
-            }
-
-            const loadingContainer = document.getElementById('ai-loading-container');
-            const resultContainer = document.getElementById('ai-analysis-result-container');
-            const quizContainer = document.getElementById('ai-quiz-container');
-
-            loadingContainer.classList.remove('hidden');
-            resultContainer.classList.add('hidden');
-            quizContainer.classList.add('hidden');
-            document.getElementById('ai-loading-text').innerText = "Gemini está cruzando referencias clínicas y redactando el informe...";
-
-            const systemInstruction = "Eres un supervisor clínico universitario de psicología de alta exigencia académica. Vas a examinar el caso propuesto con base en autores como Papalia (desarrollo biológico/físico), Erikson (desarrollo psicosocial), Piaget (cognitivo), Kohlberg (desarrollo moral) y Baltes (envejecimiento). Devuelve una respuesta estructurada directamente con etiquetas de marcado HTML limpio (usa h3, p, ul, li, strong, sin etiquetas de markdown de tipo html al principio ni final) para dar un formato elegante. El informe clínico debe tener tres secciones bien detalladas: 1. Hipótesis Diagnóstica y Análisis Clínico de la Etapa del Ciclo Vital, 2. Marco Teórico Explicativo y 3. Propuesta de Intervención Psicológica y Recomendaciones.";
-
-            try {
-                const responseText = await callGeminiAPI(caseInput, systemInstruction);
-                document.getElementById('ai-analysis-text-content').innerHTML = responseText;
-                resultContainer.classList.remove('hidden');
-                addXP(25); // Premio pequeño por consultar herramientas de IA
-            } catch (err) {
-                alert(`Error en el Laboratorio IA: ${err.message}`);
-            } finally {
-                loadingContainer.classList.add('hidden');
-            }
-        }
-
-        // Acciones del Laboratorio de IA: Generar Desafío Dinámico de Trivia
-        async function generateQuestionWithAI() {
-            const stageTopic = document.getElementById('ai-stage-select').value;
-            const loadingContainer = document.getElementById('ai-loading-container');
-            const resultContainer = document.getElementById('ai-analysis-result-container');
-            const quizContainer = document.getElementById('ai-quiz-container');
-
-            loadingContainer.classList.remove('hidden');
-            resultContainer.classList.add('hidden');
-            quizContainer.classList.add('hidden');
-            document.getElementById('ai-loading-text').innerText = "Formulando una pregunta avanzada estilo examen universitario con Gemini...";
-
-            const systemInstruction = "Eres un generador de preguntas de evaluación universitaria de psicología del desarrollo humano de alta complejidad. Genera una pregunta de trivia interactiva basada exclusivamente en el eje temático provisto. Debes responder con un objeto JSON estructurado que cumpla exactamente el siguiente esquema.";
-            
-            const responseSchema = {
-                type: "OBJECT",
-                properties: {
-                    pregunta: { type: "STRING" },
-                    opciones: {
-                        type: "ARRAY",
-                        items: { type: "STRING" }
-                    },
-                    respuesta_correcta_index: { type: "INTEGER" },
-                    explicacion: { type: "STRING" }
-                },
-                required: ["pregunta", "opciones", "respuesta_correcta_index", "explicacion"]
-            };
-
-            const promptText = `Genera un desafío de examen muy detallado y clínico para el tema: "${stageTopic}". Las opciones deben ser académicamente plausibles (distractores fuertes).`;
-
-            try {
-                const jsonText = await callGeminiAPI(promptText, systemInstruction, responseSchema);
-                const quizData = JSON.parse(jsonText);
-                
-                state.activeAIQuestion = quizData;
-                state.hasAnsweredAIQuestion = false;
-
-                // Renderizar la pregunta en el contenedor
-                document.getElementById('ai-quiz-question').innerText = quizData.pregunta;
-                
-                const optionsBox = document.getElementById('ai-quiz-options');
-                optionsBox.innerHTML = '';
-                
-                quizData.opciones.forEach((opcion, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = "text-left p-4 rounded-xl border border-slate-200 hover:border-amber-600 hover:bg-amber-50/50 transition-all font-medium text-slate-700 bg-white flex items-center gap-3";
-                    btn.innerHTML = `<span class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs text-amber-900">${String.fromCharCode(65 + index)}</span> <span class="text-sm">${opcion}</span>`;
-                    btn.onclick = () => selectAIQuizOption(index);
-                    optionsBox.appendChild(btn);
-                });
-
-                document.getElementById('ai-quiz-feedback').classList.add('hidden');
-                quizContainer.classList.remove('hidden');
-            } catch (err) {
-                alert(`Error al generar la pregunta interactiva: ${err.message}`);
-            } finally {
-                loadingContainer.classList.add('hidden');
-            }
-        }
-
-        // Evaluar la opción seleccionada en el juego de IA
-        function selectAIQuizOption(selectedIndex) {
-            if (state.hasAnsweredAIQuestion) return;
-            state.hasAnsweredAIQuestion = true;
-
-            const quizData = state.activeAIQuestion;
-            const optionElements = document.getElementById('ai-quiz-options').children;
-
-            // Bloquear clics extra
-            for (let btn of optionElements) {
-                btn.disabled = true;
-            }
-
-            state.totalAnswersCount++;
-            state.statQuestionsAnswered++;
-
-            const feedbackPanel = document.getElementById('ai-quiz-feedback');
-            const feedbackIcon = document.getElementById('ai-quiz-feedback-icon');
-            const feedbackTitle = document.getElementById('ai-quiz-feedback-title');
-            const feedbackText = document.getElementById('ai-quiz-feedback-text');
-
-            feedbackPanel.classList.remove('hidden');
-
-            if (selectedIndex === quizData.respuesta_correcta_index) {
-                state.correctAnswersCount++;
-                addXP(75); // Más puntos por responder un desafío de la IA
-                optionElements[selectedIndex].className = "text-left p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 font-medium text-emerald-900 flex items-center gap-3";
-                feedbackIcon.innerHTML = "🎉";
-                feedbackTitle.innerText = "¡Excelente Respuesta! +75 XP";
-                feedbackTitle.className = "font-bold text-sm text-emerald-800";
-            } else {
-                loseLife();
-                optionElements[selectedIndex].className = "text-left p-4 rounded-xl border-2 border-rose-500 bg-rose-50/50 font-medium text-rose-900 flex items-center gap-3";
-                optionElements[quizData.respuesta_correcta_index].className = "text-left p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 font-medium text-emerald-900 flex items-center gap-3";
-                feedbackIcon.innerHTML = "❌";
-                feedbackTitle.innerText = "Incorrecto";
-                feedbackTitle.className = "font-bold text-sm text-rose-800";
-            }
-
-            feedbackText.innerText = quizData.explicacion;
-            updateStatsUI();
-        }
-
-        // Cerrar resultados del Laboratorio IA
-        function closeAIResult(containerId) {
-            document.getElementById(containerId).classList.add('hidden');
-        }
-
-        // Cargar plantillas de casos clínicos en el textarea
-        function fillAICaseTemplate(id) {
-            const textarea = document.getElementById('ai-case-input');
-            if (id === 1) {
-                textarea.value = "Paciente masculino de 45 años, casado, con hijos de 16 y 14 años. Su padre fue diagnosticado con artrosis severa y declive metabólico, por lo que asume sus cuidados además de su jornada de oficina de 9 horas. Reporta fatiga constante, dolores somáticos inexplicables en espalda, y refiere: 'Me siento responsable de todos, pero nadie me cuida a mí. Veo mis fotos antiguas y siento que mi juventud ya se extinguió, que el tiempo va muy de prisa'.";
-            } else if (id === 2) {
-                textarea.value = "Niña de 8 años, asiste a 3° de primaria. Desde hace 3 semanas llora intensamente y simula dolores estomacales agudos cada mañana antes de subir al transporte escolar. Sus calificaciones han bajado y reporta tener miedo de que 'algo malo le pase a mi mamá mientras yo no estoy en el salón de clases'.";
-            } else if (id === 3) {
-                textarea.value = "Adulto mayor de 74 años, soltero, con diagnóstico de osteopenia y una marcha notablemente más lenta. Para continuar con su pasatiempo preferido de jardinería, ha decidido dejar de regar macetas colgantes altas (que le causaban caídas) y enfocarse en plantar hierbas aromáticas en camas elevadas de fácil acceso con apoyo de su sobrino.";
+        function updateMonsterHPUI() {
+            const bar = document.getElementById('monster-hp-bar');
+            const text = document.getElementById('monster-hp-txt');
+            if (bar && text) {
+                bar.style.width = `${state.monsterHP}%`;
+                text.innerText = `${state.monsterHP} HP`;
             }
         }
 
@@ -1321,8 +1252,8 @@
             const stageQs = questionDatabase[state.activeStage];
             const currentQ = stageQs[state.activeQuestionIndex];
             
-            document.getElementById('trivia-stage-indicator').innerText = `Etapa ${state.activeStage}`;
-            document.getElementById('trivia-progress').innerText = `Pregunta ${state.activeQuestionIndex + 1}/${stageQs.length}`;
+            document.getElementById('trivia-stage-indicator').innerText = `Fase ${state.activeStage}`;
+            document.getElementById('trivia-progress').innerText = `Golpes asestados: ${state.activeQuestionIndex}/${stageQs.length}`;
             
             const progressPct = ((state.activeQuestionIndex) / stageQs.length) * 100;
             document.getElementById('trivia-progress-bar').style.width = `${progressPct}%`;
@@ -1340,8 +1271,89 @@
                 container.appendChild(btn);
             });
 
+            // Sincronizar botones de ayuda
+            updateInventoryUI();
+
             // Resetear explicación
             document.getElementById('trivia-explanation-panel').classList.add('hidden');
+        }
+
+        // MECÁNICA: Usar Pista (Descarta 2 erróneas)
+        function useHint() {
+            if (state.hintsAvailable <= 0) {
+                alert("No tienes pistas acumuladas en tu inventario. ¡Derrota monstruos para ganar más!");
+                return;
+            }
+
+            const currentQ = questionDatabase[state.activeStage][state.activeQuestionIndex];
+            const container = document.getElementById('trivia-options-container');
+            const buttons = container.children;
+            
+            let discarded = 0;
+            let indices = [0, 1, 2, 3];
+            // Desordenar índices aleatoriamente para descartar de forma aleatoria
+            indices.sort(() => Math.random() - 0.5);
+
+            for (let idx of indices) {
+                if (idx !== currentQ.answerIndex && discarded < 2) {
+                    buttons[idx].disabled = true;
+                    buttons[idx].classList.add('opacity-30', 'bg-slate-100', 'line-through');
+                    discarded++;
+                }
+            }
+
+            state.hintsAvailable--;
+            updateInventoryUI();
+        }
+
+        // MECÁNICA: Saltar Pregunta (Golpe automático)
+        function useSkip() {
+            if (state.skipsAvailable <= 0) {
+                alert("No tienes comodines de salto acumulados. ¡Sigue escalando la colina!");
+                return;
+            }
+
+            state.skipsAvailable--;
+            updateInventoryUI();
+
+            // Ejecuta animación de ataque y progresa
+            const heroEl = document.getElementById('rpg-hero');
+            const monsterEl = document.getElementById('rpg-monster');
+            const impactText = document.getElementById('float-damage-text');
+
+            heroEl.classList.remove('animate-idle-hero');
+            heroEl.classList.add('animate-attack-hero');
+
+            setTimeout(() => {
+                monsterEl.classList.add('animate-shake');
+                state.monsterHP = Math.max(0, state.monsterHP - 34);
+                updateMonsterHPUI();
+
+                if (impactText) {
+                    impactText.innerText = "¡COMODÍN UTILIZADO! ⏭️";
+                    impactText.className = "text-2xl font-extrabold text-violet-400 tracking-wider absolute drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-20 floating-impact";
+                    impactText.classList.remove('hidden');
+                }
+            }, 300);
+
+            setTimeout(() => {
+                heroEl.classList.add('animate-idle-hero');
+                heroEl.classList.remove('animate-attack-hero');
+                monsterEl.classList.remove('animate-shake');
+                if (impactText) impactText.classList.add('hidden');
+                
+                // Avanzar de manera automática
+                const stageQs = questionDatabase[state.activeStage];
+                state.activeQuestionIndex++;
+
+                if (state.activeQuestionIndex < stageQs.length) {
+                    loadQuestion();
+                } else {
+                    // Derrota final de monstruo -> Activar Ruleta
+                    addXP(100);
+                    openRouletteModal();
+                }
+            }, 1000);
         }
 
         function selectOption(selectedIndex) {
@@ -1364,21 +1376,78 @@
             
             explPanel.classList.remove('hidden');
 
+            const heroEl = document.getElementById('rpg-hero');
+            const monsterEl = document.getElementById('rpg-monster');
+            const impactText = document.getElementById('float-damage-text');
+
             if (selectedIndex === currentQ.answerIndex) {
-                // Correcto
+                // CORRECTO: ¡Ataca el héroe!
                 state.correctAnswersCount++;
                 addXP(50);
+                
+                // Animaciones
+                heroEl.classList.remove('animate-idle-hero');
+                heroEl.classList.add('animate-attack-hero');
+                
+                setTimeout(() => {
+                    monsterEl.classList.add('animate-shake');
+                    // Reducir HP del monstruo (34 puntos por acierto, la última lo derrota)
+                    state.monsterHP = Math.max(0, state.monsterHP - 34);
+                    if (state.activeQuestionIndex === stageQs.length - 1) {
+                        state.monsterHP = 0; // Derrota total
+                    }
+                    updateMonsterHPUI();
+
+                    // Mostrar impacto flotante
+                    impactText.innerText = "¡CRÍTICO! -34 HP 💥";
+                    impactText.className = "text-3xl font-extrabold text-amber-400 tracking-wider absolute drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-20 floating-impact";
+                    impactText.classList.remove('hidden');
+                }, 300);
+
+                setTimeout(() => {
+                    heroEl.classList.add('animate-idle-hero');
+                    heroEl.classList.remove('animate-attack-hero');
+                    monsterEl.classList.remove('animate-shake');
+                    impactText.classList.add('hidden');
+                }, 1000);
+
                 optionsBtns[selectedIndex].className = "text-left p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 font-medium text-emerald-900 flex items-center gap-3";
-                explIcon.innerHTML = "🎉";
-                explTitle.innerText = "¡Excelente Respuesta!";
+                explIcon.innerHTML = "⚔️";
+                explTitle.innerText = "¡Golpe Directo!";
                 explTitle.className = "font-bold text-lg text-emerald-800 mb-1";
             } else {
-                // Incorrecto
+                // INCORRECTO: ¡Ataca el monstruo!
                 loseLife();
+
+                // Animaciones
+                monsterEl.classList.remove('animate-idle-monster');
+                monsterEl.classList.add('animate-attack-monster');
+
+                setTimeout(() => {
+                    heroEl.classList.add('animate-shake');
+                    
+                    // Mostrar impacto flotante si no es inmune
+                    if (state.immunityUntil && Date.now() < state.immunityUntil) {
+                        impactText.innerText = "¡ESCUDO ACTIVO! 🛡️";
+                        impactText.className = "text-3xl font-extrabold text-blue-400 tracking-wider absolute drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-20 floating-impact";
+                    } else {
+                        impactText.innerText = "¡GOLPE ENEMY! -1 VIDA 💔";
+                        impactText.className = "text-3xl font-extrabold text-rose-500 tracking-wider absolute drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-20 floating-impact";
+                    }
+                    impactText.classList.remove('hidden');
+                }, 300);
+
+                setTimeout(() => {
+                    monsterEl.classList.add('animate-idle-monster');
+                    monsterEl.classList.remove('animate-attack-monster');
+                    heroEl.classList.remove('animate-shake');
+                    impactText.classList.add('hidden');
+                }, 1000);
+
                 optionsBtns[selectedIndex].className = "text-left p-4 rounded-xl border-2 border-rose-500 bg-rose-50/50 font-medium text-rose-900 flex items-center gap-3";
                 optionsBtns[currentQ.answerIndex].className = "text-left p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 font-medium text-emerald-900 flex items-center gap-3";
-                explIcon.innerHTML = "❌";
-                explTitle.innerText = "Respuesta Incorrecta";
+                explIcon.innerHTML = "🛡️";
+                explTitle.innerText = "Defensa Fallida";
                 explTitle.className = "font-bold text-lg text-rose-800 mb-1";
             }
 
@@ -1393,19 +1462,126 @@
             if (state.activeQuestionIndex < stageQs.length) {
                 loadQuestion();
             } else {
-                // Fin de Etapa con Éxito
+                // Monstruo derrotado del todo! Detenerse para invocar la Ruleta
                 addXP(100);
-                // Desbloquear la siguiente etapa
-                const nextStage = state.activeStage + 1;
-                if (nextStage <= 7 && !state.completedStages.includes(nextStage)) {
-                    state.completedStages.push(nextStage);
-                }
+                openRouletteModal();
+            }
+        }
+
+        // --- 8. LÓGICA DE LA RULETA DE LA FORTUNA ---
+        let currentRotation = 0;
+        let selectedPrize = null;
+
+        function openRouletteModal() {
+            document.getElementById('btn-spin-wheel').disabled = false;
+            document.getElementById('btn-spin-wheel').classList.remove('opacity-50', 'cursor-not-allowed');
+            document.getElementById('wheel-prize-result').classList.add('hidden');
+            
+            // Resetear la rotación visual del disco de la ruleta a 0
+            const wheel = document.getElementById('wheel-element');
+            wheel.style.transition = 'none';
+            wheel.style.transform = 'rotate(0deg)';
+            currentRotation = 0;
+
+            document.getElementById('roulette-modal').classList.remove('hidden');
+        }
+
+        function spinWheel() {
+            document.getElementById('btn-spin-wheel').disabled = true;
+            document.getElementById('btn-spin-wheel').classList.add('opacity-50', 'cursor-not-allowed');
+
+            // Determinar premio por probabilidades y adaptar diálogos de Sigmund Freud anti-psicoanálisis (chuzcos):
+            // 1. Vida Extra (20%) [0 - 0.20]
+            // 2. Inmunidad 5m (5%) [0.20 - 0.25]
+            // 3. Pista (25%) [0.25 - 0.50]
+            // 4. Saltar Pregunta (25%) [0.50 - 0.75]
+            // 5. Sin ayuda (25%) [0.75 - 1.00]
+            const r = Math.random();
+            let baseAngle = 0; // Ángulo final para alinear el puntero (top 0°)
+
+            if (r < 0.20) {
+                selectedPrize = {
+                    id: "life",
+                    title: "¡Líbido Sanada con Fraude! ❤️",
+                    desc: "Sigmund Freud suspira: 'He analizado tu histeria con mi péndulo y concluyo que este corazón extra sanará tu trauma infantil. Aunque pensándolo bien... curar neurosis hablando de puros de tabaco y culpar a los padres es un disparate enorme que inventé para pagar mi renta en Viena. ¡Disfruta esta vida extra gratis!'"
+                };
+                baseAngle = 324; // Centro de cuña de 0° a 72°
+            } else if (r < 0.25) {
+                selectedPrize = {
+                    id: "immunity",
+                    title: "¡Inmunidad por Represión Neurótica! 🛡️",
+                    desc: "Sigmund Freud se acomoda las gafas: '¡Inmunidad total por 5 minutos! Enterraremos tus fallas tan hondo en el inconsciente que ni el mismísimo Superego las va a encontrar. La represión masiva es un invento fantástico para pretender que no cometemos errores. Qué locura que me creyeran eso, pero mira, ¡aquí te salva la partida!'"
+                };
+                baseAngle = 279; // Centro de cuña de 72° a 90°
+            } else if (r < 0.50) {
+                selectedPrize = {
+                    id: "hint",
+                    title: "¡Pista por Asociación Forzada! 🔮",
+                    desc: "Sigmund Freud enciende un puro: '¡Te concedo una Pista! Te descarto dos opciones falsas. Es idéntico a mi método de Asociación Libre: te pongo a balbucear incoherencias acostado en un diván hasta que de pura suerte eliminamos lo que no sirve. Un absoluto timo místico que patenté para cobrar por hora. ¡Aprovéchala!'"
+                };
+                baseAngle = 225; // Centro de cuña de 90° a 180°
+            } else if (r < 0.75) {
+                selectedPrize = {
+                    id: "skip",
+                    title: "¡Sublimación y Negación Absoluta! ⏭️",
+                    desc: "Sigmund Freud te guiña un ojo: '¡Comodín de Salto! Evitaremos esta pregunta traumática aplicando mi mecanismo favorito: la Negación. Si todos pretendemos colectivamente que este obstáculo no existe, ¡pum!, desaparece. Una completa mentira metodológica, pero qué bien nos sirve para esquivar el examen.'"
+                };
+                baseAngle = 135; // Centro de cuña de 180° a 270°
+            } else {
+                selectedPrize = {
+                    id: "none",
+                    title: "¡No hay ayuda... todo es culpa de tu madre! 💀",
+                    desc: "Sigmund Freud te mira con decepción: 'La ruleta marca... ¡NADA! ¿Frustrado? Claramente sufres de una regresión anal-retentiva y, por supuesto, la culpa absoluta de tu mala suerte la tiene tu madre. Qué cómodo fue inventar que las madres tienen la culpa de todo en lugar de admitir que mi ruleta es una estafa vianesa.'"
+                };
+                baseAngle = 45; // Centro de cuña de 270° a 360°
+            }
+
+            // Añadir múltiples rotaciones de giro dramático (10 vueltas completas + ángulo deseado)
+            const targetRotation = 3600 + baseAngle;
+            
+            const wheel = document.getElementById('wheel-element');
+            wheel.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.15, 1)';
+            wheel.style.transform = `rotate(${targetRotation}deg)`;
+
+            // Esperar el fin de la animación para adjudicar el premio
+            setTimeout(() => {
+                applyPrizeEffect();
                 
-                if (state.activeStage === 7) {
-                    showFinalResults();
-                } else {
-                    changeView('adventure');
-                }
+                // Mostrar tarjeta con el veredicto del premio
+                document.getElementById('prize-title').innerText = selectedPrize.title;
+                document.getElementById('prize-desc').innerText = selectedPrize.desc;
+                document.getElementById('wheel-prize-result').classList.remove('hidden');
+                
+                updateInventoryUI();
+                updateHeartsUI();
+            }, 4100);
+        }
+
+        function applyPrizeEffect() {
+            if (selectedPrize.id === "life") {
+                state.lives = Math.min(5, state.lives + 1);
+            } else if (selectedPrize.id === "immunity") {
+                state.immunityUntil = Date.now() + 5 * 60 * 1000; // 5 minutos exactos
+            } else if (selectedPrize.id === "hint") {
+                state.hintsAvailable++;
+            } else if (selectedPrize.id === "skip") {
+                state.skipsAvailable++;
+            }
+        }
+
+        function closeRouletteAndProceed() {
+            document.getElementById('roulette-modal').classList.add('hidden');
+            
+            // Proceder a la siguiente etapa en el mapa
+            const nextStage = state.activeStage + 1;
+            if (nextStage <= 7 && !state.completedStages.includes(nextStage)) {
+                state.completedStages.push(nextStage);
+            }
+            
+            if (state.activeStage === 7) {
+                showFinalResults();
+            } else {
+                changeView('adventure');
             }
         }
 
@@ -1434,7 +1610,7 @@
             // Setear Diálogo del paciente
             const dialogBox = document.getElementById('dialogue-box');
             dialogBox.innerHTML = `
-                <div class="flex gap-3">
+                <div class="flex gap-3 animate-in fade-in slide-in-from-left duration-300">
                     <div class="w-8 h-8 rounded-full bg-navy text-gold flex items-center justify-center font-bold text-xs">P</div>
                     <div class="bg-white p-3 rounded-xl border border-slate-200 text-sm max-w-[85%] shadow-sm">
                         <p class="font-bold text-xs text-slate-400 uppercase tracking-widest mb-1">${activeCase.patient}</p>
@@ -1481,14 +1657,14 @@
             // Desplegar feedback del paciente
             const dialogBox = document.getElementById('dialogue-box');
             dialogBox.innerHTML += `
-                <div class="flex gap-3 justify-end mt-4">
+                <div class="flex gap-3 justify-end mt-4 animate-in fade-in slide-in-from-right duration-300">
                     <div class="bg-emerald-100 p-3 rounded-xl border border-emerald-200 text-sm max-w-[85%] shadow-sm text-right">
                         <p class="font-bold text-xs text-emerald-800 uppercase tracking-widest mb-1">Tu Respuesta</p>
                         <p class="text-emerald-950">Acción o diagnóstico aplicado.</p>
                     </div>
                     <div class="w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-stethoscope"></i></div>
                 </div>
-                <div class="flex gap-3 mt-4">
+                <div class="flex gap-3 mt-4 animate-in fade-in slide-in-from-left duration-300">
                     <div class="w-8 h-8 rounded-full bg-navy text-gold flex items-center justify-center font-bold text-xs">P</div>
                     <div class="bg-white p-3 rounded-xl border border-slate-200 text-sm max-w-[85%] shadow-sm">
                         <p class="font-bold text-xs text-slate-400 uppercase tracking-widest mb-1">${clinicalCases[state.activeCaseIndex].patient}</p>
@@ -1540,7 +1716,7 @@
             }
         }
 
-        // --- 10. MÓDULO FLASHCARDS S.O.C. ---
+        // --- 11. MÓDULO FLASHCARDS S.O.C. ---
         function startFlashcards() {
             state.activeCardIndex = 0;
             state.isCardFlipped = false;
@@ -1585,7 +1761,7 @@
             nextCard();
         }
 
-        // --- 11. MÓDULO FINALES Y REINICIOS ---
+        // --- 12. MÓDULO FINALES Y REINICIOS ---
         function showFinalResults() {
             changeView('results');
             document.getElementById('result-score').innerText = `${state.score} XP`;
@@ -1593,15 +1769,15 @@
             let accuracy = state.totalAnswersCount > 0 ? Math.round((state.correctAnswersCount / state.totalAnswersCount) * 100) : 100;
             document.getElementById('result-accuracy').innerText = `${accuracy}%`;
 
-            let feedback = "¡Excelente desempeño general! Dominas la ontogenia sensorial y las transiciones del adulto con gran fluidez. Recomiendo continuar estudiando el caso clínico de Carlos para afinar los diagnósticos diferenciales en el ámbito laboral.";
-            let rank = "Especialista del Ciclo Vital";
+            let feedback = "¡Increíble victoria! Has vencido a todos los espectros teóricos del desarrollo con un dominio científico superlativo de la materia. Tu destreza te hace merecedor del título honorífico de Especialista.";
+            let rank = "Especialista en Ciclo Vital 🏆";
 
             if (state.score < 500) {
-                feedback = "Buen comienzo, pero debes esforzarte más. Repasa las leyes del crecimiento infantil y los subtipos de demencia en la edad tardía.";
-                rank = "Auxiliar Académico";
+                feedback = "Una retirada a tiempo no es derrota. Revisa las flashcards de memorización activa y las leyes psicomotoras para volver a subir la colina.";
+                rank = "Auxiliar Académico 📜";
             } else if (state.score < 1000) {
-                feedback = "Demuestras un dominio técnico intermedio. Pon especial atención a los estadios de operaciones de Piaget y el modelo SOC de Baltes.";
-                rank = "Interno del Desarrollo";
+                feedback = "Buen intento teórico. Domina los estadios de operaciones y el modelo SOC de Baltes para asegurar el máximo rango clínico en tu examen.";
+                rank = "Interno del Desarrollo 🎓";
             }
 
             document.getElementById('result-rank').innerText = rank;
@@ -1609,13 +1785,13 @@
         }
 
         function showGameOver() {
-            alert("Has agotado todas tus vidas. El juego se reiniciará para que puedas seguir practicando.");
+            alert("¡Has sido derrotado por la bestia de esta etapa! Tus vidas cayeron a 0. No te preocupes, el juego se reiniciará para que puedas entrenar tus conocimientos.");
             resetGame();
         }
 
         function resetGame() {
             state.score = 0;
-            state.lives = 3;
+            state.lives = 5; // Volver a las 5 vidas completas
             state.completedStages = [1];
             state.activeStage = null;
             state.activeQuestionIndex = 0;
@@ -1624,6 +1800,9 @@
             state.statQuestionsAnswered = 0;
             state.statClinicalCasesSolved = 0;
             state.statCardsLearned = 0;
+            state.hintsAvailable = 0;
+            state.skipsAvailable = 0;
+            state.immunityUntil = 0;
             
             changeView('home');
         }
