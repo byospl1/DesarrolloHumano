@@ -1117,9 +1117,9 @@
         }
 
         // --- 8. INTEGRACIÓN DE GEMINI API (LLM) ---
-        const apiKey = ""; // La clave se inyectará en el entorno durante el runtime
+        const apiKey = "AQ.Ab8RN6K7eEoJhPb3y-nBM7A39eEDFl6HaMJEVzQ0uKqpDVhb0g"; // API Key del usuario preconfigurada para exportación directa
 
-        // Función reutilizable de llamada a Gemini con reintentos exponenciales
+        // Función de llamada a Gemini con reintentos exponenciales
         async function callGeminiAPI(promptText, systemInstructionText, responseSchema = null) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             
