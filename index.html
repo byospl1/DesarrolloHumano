@@ -1719,6 +1719,34 @@
         }
 
         // --- 11. MÓDULO FLASHCARDS S.O.C. ---
+        // Mazo de fichas (frente = concepto/pregunta, reverso = explicación).
+        const flashcardsDataset = [
+            { tag: "Bases Conceptuales", question: "Temperamento", answer: "Base biológica innata de la reactividad emocional (SNC + sistema endocrino), detectable desde los primeros meses. Distinto del carácter (aprendido) y de la personalidad (integración de ambos)." },
+            { tag: "Bases Conceptuales", question: "¿Qué es la epigenética?", answer: "Cambios en la expresión de los genes producidos por el entorno SIN alterar la secuencia de ADN. Es el puente directo entre el ambiente y la biología." },
+            { tag: "Bases Conceptuales", question: "El ser humano según el enfoque filosófico", answer: "Entidad dotada de racionalidad, libre albedrío, ética y autoconciencia." },
+            { tag: "Desarrollo Prenatal", question: "Etapa embrionaria (organogénesis)", answer: "Semanas ~2 a 8. Se forman las tres capas germinales (ectodermo, mesodermo, endodermo) y los órganos principales. Es el periodo de MÁXIMA vulnerabilidad a teratógenos." },
+            { tag: "Desarrollo Prenatal", question: "Teratógeno", answer: "Agente ambiental (alcohol, tabaco, fármacos, virus, radiación) que provoca daño en el desarrollo prenatal." },
+            { tag: "Desarrollo Prenatal", question: "Efecto del estrés materno crónico", answer: "El cortisol materno atraviesa la placenta y altera principalmente el desarrollo neurológico y la regulación del eje de estrés del feto." },
+            { tag: "Desarrollo Prenatal", question: "Primer sentido en aparecer en el feto", answer: "El tacto: es el primer sentido que emerge en la ontogenia intrauterina humana." },
+            { tag: "Desarrollo Físico", question: "Ley céfalo-caudal", answer: "El desarrollo motor avanza de la cabeza hacia los pies: se logra el sostén cefálico y el control del tronco antes que la marcha voluntaria." },
+            { tag: "Desarrollo Físico", question: "Ley próximo-distal", answer: "El control motor avanza desde el centro del cuerpo (eje/tronco) hacia las extremidades." },
+            { tag: "Desarrollo Cognitivo", question: "Permanencia del objeto", answer: "Hito de la etapa sensoriomotriz (Piaget): comprender que los objetos siguen existiendo aunque estén fuera de la vista." },
+            { tag: "Desarrollo del Lenguaje", question: "Holofrase", answer: "Una sola palabra que expresa una idea u oración completa en el lenguaje temprano (p. ej. 'aba' para decir 'quiero agua')." },
+            { tag: "Desarrollo Cognitivo", question: "Descentración", answer: "Capacidad de las operaciones concretas de atender varios aspectos de una situación a la vez; reduce el egocentrismo preoperacional." },
+            { tag: "Desarrollo Cognitivo", question: "Conservación", answer: "Entender que la cantidad (volumen, número, masa) no cambia aunque cambie la forma o disposición. Logro de las operaciones concretas." },
+            { tag: "Desarrollo Moral", question: "Moral heterónoma", answer: "Etapa moral inicial (Piaget/Kohlberg): el niño juzga la gravedad de un acto por sus consecuencias materiales, no por la intención." },
+            { tag: "Niñez y Adolescencia", question: "Bullying: síntomas internalizantes", answer: "Consecuencias dirigidas hacia adentro: ansiedad, depresión, baja autoestima y aislamiento social." },
+            { tag: "Adultez Joven", question: "Salud física en la juventud (21-29)", answer: "Punto máximo de la condición física: mayor fuerza, agudeza sensorial y capacidad reproductiva de toda la vida." },
+            { tag: "Adultez Joven", question: "La soltería según Papalia", answer: "Opción de vida válida y cada vez más frecuente, no una etapa deficitaria ni un fracaso." },
+            { tag: "Adultez Joven", question: "Predictor del bienestar conyugal", answer: "La calidad de la comunicación y de la relación —no la mera convivencia— es el predictor clave del bienestar biopsicosocial." },
+            { tag: "Adultez Media", question: "Menopausia", answer: "Cese permanente de la menstruación (12 meses sin periodo) por agotamiento folicular; marca el fin de la fertilidad." },
+            { tag: "Adultez Media", question: "Inteligencia fluida", answer: "Capacidad de resolver problemas nuevos y velocidad de procesamiento perceptivo. Declina sutilmente en la adultez media (la cristalizada se mantiene o aumenta)." },
+            { tag: "Adultez Media", question: "Generatividad vs. estancamiento", answer: "Conflicto psicosocial de la adultez media (Erikson): contribuir y guiar a las siguientes generaciones frente al estancamiento y la autoabsorción." },
+            { tag: "Vejez", question: "Sarcopenia", answer: "Pérdida progresiva de masa y fuerza muscular esquelética asociada al envejecimiento." },
+            { tag: "Vejez", question: "Marcadores del Alzheimer", answer: "Placas de beta-amiloide y ovillos neurofibrilares de proteína tau en el cerebro." },
+            { tag: "Vejez", question: "Modelo SOC de Baltes", answer: "Optimización Selectiva con Compensación: seleccionar metas realistas, optimizar los recursos disponibles y compensar las pérdidas para adaptarse al envejecimiento." }
+        ];
+
         function startFlashcards() {
             state.activeCardIndex = 0;
             state.isCardFlipped = false;
@@ -1777,10 +1805,15 @@
             loadFlashcard();
         }
 
+        const learnedCardIds = new Set();
         function markCardLearned() {
-            state.statCardsLearned++;
-            addXP(15);
-            updateStatsUI();
+            // Solo cuenta la primera vez que se domina cada ficha.
+            if (!learnedCardIds.has(state.activeCardIndex)) {
+                learnedCardIds.add(state.activeCardIndex);
+                state.statCardsLearned = learnedCardIds.size;
+                addXP(15);
+                updateStatsUI();
+            }
             nextCard();
         }
 
@@ -1823,6 +1856,7 @@
             state.statQuestionsAnswered = 0;
             state.statClinicalCasesSolved = 0;
             state.statCardsLearned = 0;
+            learnedCardIds.clear();
             state.hintsAvailable = 0;
             state.skipsAvailable = 0;
             state.immunityUntil = 0;
@@ -1835,6 +1869,16 @@
             updateHeartsUI();
             updateScoreUI();
         }
+
+        // Teclado para PC: solo activo en la vista de flashcards.
+        document.addEventListener('keydown', function(e) {
+            const fcView = document.getElementById('view-flashcards');
+            if (!fcView || fcView.classList.contains('hidden')) return;
+            if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); nextCard(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevCard(); }
+            else if (e.key.toLowerCase() === 'd') { e.preventDefault(); markCardLearned(); }
+        });
     </script>
 </body>
 </html>
