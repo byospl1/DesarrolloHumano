@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
+        /* STREAMING_CHUNK: Definición de variables de diseño y estilos globales... */
         body {
             font-family: 'Montserrat', sans-serif;
             background-color: #FDFCF0; /* Color crema suave del manual */
@@ -26,9 +27,9 @@
         .border-navy { border-color: #002147; }
         .color-gold { color: #D4AF37; }
         .bg-gold { background-color: #D4AF37; }
-        .border-gold { border-color: #D4AF37; }
+        .border-gold { border-color: #002147; }
         
-        /* --- ANIMACIONES DE COMBATE RPG --- */
+        /* STREAMING_CHUNK: Animaciones CSS para combates RPG y efectos de impacto... */
         @keyframes idle-hero {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-6px); }
@@ -71,22 +72,28 @@
             animation: float-text 1.2s forwards ease-out;
         }
 
-        /* Efecto de rotación de flashcards */
+        /* STREAMING_CHUNK: Estilos avanzados para rotación 3D de Flashcards... */
         .perspective {
             perspective: 1000px;
+            -webkit-perspective: 1000px;
         }
         .preserve-3d {
             transform-style: preserve-3d;
-            transition: transform 0.6s;
+            -webkit-transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .flipped {
             transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
         }
         .backface-hidden {
             backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
         }
         .rotate-y-180 {
-            transform: rotateY(180deg);
+            transform: rotateY(180deg) !important;
+            -webkit-transform: rotateY(180deg) !important;
         }
 
         /* DISEÑO DE LA RULETA */
@@ -544,14 +551,14 @@
             </div>
 
             <!-- Contenedor Flashcard -->
-            <div class="max-w-md mx-auto">
+            <div class="max-w-md mx-auto bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <div class="perspective w-full h-80 cursor-pointer" onclick="flipCard()">
                     <div id="flashcard-inner" class="preserve-3d w-full h-full relative rounded-2xl shadow-2xl border border-slate-200">
                         <!-- Lado Frontal -->
-                        <div class="absolute inset-0 bg-white rounded-2xl p-8 flex flex-col justify-between backface-hidden">
+                        <div class="absolute inset-0 bg-white rounded-2xl p-8 flex flex-col justify-between backface-hidden border border-slate-100">
                             <span class="text-xs font-bold text-slate-400 uppercase tracking-widest" id="card-tag">Terminología Clave</span>
-                            <div class="flex-1 flex items-center justify-center text-center">
-                                <h3 id="card-question" class="text-2xl font-bold color-navy">¿Qué es la Epigenética?</h3>
+                            <div class="flex-grow flex items-center justify-center text-center">
+                                <h3 id="card-question" class="text-2xl font-bold color-navy leading-snug">¿Qué es la Epigenética?</h3>
                             </div>
                             <span class="text-xs text-gold text-center font-medium"><i class="fa-solid fa-rotate"></i> Clic en la tarjeta para voltear</span>
                         </div>
@@ -559,8 +566,8 @@
                         <!-- Lado Trasero -->
                         <div class="absolute inset-0 bg-navy text-white rounded-2xl p-8 flex flex-col justify-between backface-hidden rotate-y-180 border border-gold">
                             <span class="text-xs font-bold text-gold uppercase tracking-widest">Explicación Científica</span>
-                            <div class="flex-1 flex items-center justify-center text-center overflow-y-auto">
-                                <p id="card-answer" class="text-base leading-relaxed">Modificaciones en la expresión génica causadas por el entorno sin alterar la secuencia original de ADN...</p>
+                            <div class="flex-grow flex items-center justify-center text-center overflow-y-auto mt-2 mb-2">
+                                <p id="card-answer" class="text-sm md:text-base leading-relaxed">Modificaciones en la expresión génica causadas por el entorno sin alterar la secuencia original de ADN...</p>
                             </div>
                             <span class="text-xs text-slate-300 text-center font-medium"><i class="fa-solid fa-rotate"></i> Clic para ver pregunta de nuevo</span>
                         </div>
@@ -569,13 +576,13 @@
 
                 <!-- Botones de Autoevaluación -->
                 <div class="mt-8 flex justify-center gap-4">
-                    <button onclick="prevCard()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 p-3 rounded-full text-lg shadow">
+                    <button onclick="prevCard()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 p-3 rounded-full text-lg shadow transition-all active:scale-95" title="Anterior">
                         <i class="fa-solid fa-arrow-left"></i>
                     </button>
-                    <button onclick="markCardLearned()" class="bg-navy hover:bg-gold hover:text-navy text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 shadow-lg transition-all">
-                        <i class="fa-solid fa-check"></i> ¡Entendido! Guardar Progreso
+                    <button onclick="markCardLearned()" class="bg-navy hover:bg-gold hover:text-navy text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 shadow-lg transition-all active:scale-95 text-xs">
+                        <i class="fa-solid fa-check text-gold"></i> ¡Entendido! Guardar Progreso
                     </button>
-                    <button onclick="nextCard()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 p-3 rounded-full text-lg shadow">
+                    <button onclick="nextCard()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 p-3 rounded-full text-lg shadow transition-all active:scale-95" title="Siguiente">
                         <i class="fa-solid fa-arrow-right"></i>
                     </button>
                 </div>
