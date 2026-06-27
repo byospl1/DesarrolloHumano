@@ -376,10 +376,9 @@
    ranking global compartido. Si las dejas vacías, el ranking
    funciona localmente en este navegador (localStorage).
    ============================================================ */
-  
-const SUPABASE_URL  = "https://ijyysrbepzmsrgdgeakc.supabase.co";   // ej: https://abcd.supabase.co
-const SUPABASE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlzcmJlcHptc3JnZGdlYWtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5OTU0MjMsImV4cCI6MjA5NzU3MTQyM30.BW4EYCqTwnAdthMx38K7yqy_HBuzRknWKQp0oknnbvs";   // anon public key
-  
+const SUPABASE_URL  = "";   // ej: https://abcd.supabase.co
+const SUPABASE_KEY  = "";   // anon public key
+
 let sb = null;
 if (SUPABASE_URL && SUPABASE_KEY && window.supabase) {
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -420,6 +419,7 @@ const MAX_LIVES = 10;
 /* ============ ESTADO ============ */
 let player = null;          // {name, mail}
 let progress = {};          // {n1:bestScore,...}
+let nivelMax = 1;            // niveles permitidos (lo controla el admin en Supabase)
 let state = null;           // estado de batalla en curso
 
 /* ============ FRASES DE FREUD (mapa / ambiente) ============ */
@@ -450,19 +450,31 @@ function makeStars(){
 /* =====================================================
    SESIÓN / REGISTRO
    ===================================================== */
-function loadSession(){
+async function loadSession(){
   try{
     const p = JSON.parse(localStorage.getItem('vcv_player')||'null');
     progress = JSON.parse(localStorage.getItem('vcv_progress')||'{}');
-    if(p && p.mail){ player=p; enterGame(); }
+    if(p && p.mail){ player=p; await loadProfile(); enterGame(); }
   }catch(e){}
+}
+// Trae progreso y nivel_max desde Supabase (el admin manda)
+async function loadProfile(){
+  if(!sb){ nivelMax = LEVELS.length; return; }   // sin Supabase: todo abierto localmente
+  try{
+    const { data } = await sb.from('ranking_ciclo_vital')
+      .select('progreso,nivel_max').eq('email', player.mail).maybeSingle();
+    if(data){
+      if(data.progreso) progress = { ...progress, ...data.progreso };
+      nivelMax = (data.nivel_max==null) ? 1 : data.nivel_max;
+    } else { nivelMax = 1; }
+  }catch(e){ console.warn(e); nivelMax = 1; }
 }
 function saveSession(){
   localStorage.setItem('vcv_player', JSON.stringify(player));
   localStorage.setItem('vcv_progress', JSON.stringify(progress));
 }
 
-function register(){
+async function register(){
   const name = $('inName').value.trim();
   const mail = $('inMail').value.trim().toLowerCase();
   const err = $('loginErr');
@@ -471,6 +483,7 @@ function register(){
   err.textContent="";
   player = { name, mail };
   if(!progress) progress={};
+  await loadProfile();
   saveSession();
   upsertPlayer();
   enterGame();
@@ -500,7 +513,7 @@ async function upsertPlayer(){
   const score = totalScore();
   if(sb){
     try{ await sb.from('ranking_ciclo_vital').upsert(
-      { email:player.mail, nombre:player.name, puntaje:score, actualizado:new Date().toISOString() },
+      { email:player.mail, nombre:player.name, puntaje:score, progreso:progress, actualizado:new Date().toISOString() },
       { onConflict:'email' }); }catch(e){ console.warn(e); }
   } else {
     const local = JSON.parse(localStorage.getItem('vcv_rank')||'[]');
@@ -540,7 +553,7 @@ function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'
 function buildMap(){
   const path=$('levelPath');
   path.innerHTML = LEVELS.map((lv,i)=>{
-    const unlocked = i===0 || (progress[LEVELS[i-1].id]!==undefined);
+    const unlocked = i < nivelMax;
     const best = progress[lv.id];
     const done = best!==undefined;
     return `<button onclick="${unlocked?`openLevel('${lv.id}')`:'shakeLocked(this)'}"
