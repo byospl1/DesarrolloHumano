@@ -159,6 +159,12 @@
 
   .pulse-ring{ animation: pulsering 1.6s infinite; }
   @keyframes pulsering{ 0%{box-shadow:0 0 0 0 rgba(251,191,36,.6)} 70%{box-shadow:0 0 0 14px rgba(251,191,36,0)} 100%{box-shadow:0 0 0 0 rgba(251,191,36,0)} }
+  @keyframes freudGlow{ 0%,100%{box-shadow:0 0 22px rgba(245,158,11,.35), inset 0 0 20px rgba(236,72,153,.15)} 50%{box-shadow:0 0 40px rgba(245,158,11,.7), inset 0 0 28px rgba(236,72,153,.35)} }
+  .repaso-card{ position:relative; overflow:hidden; cursor:pointer; border:1px solid rgba(251,191,36,.45); background:linear-gradient(135deg, rgba(120,53,15,.55), rgba(76,5,40,.55)); animation:freudGlow 2.6s ease-in-out infinite; transition:transform .15s ease; }
+  .repaso-card:active{ transform:scale(.98); }
+  .repaso-card .rc-hat{ font-size:2.6rem; filter:drop-shadow(0 4px 8px rgba(0,0,0,.5)); animation:floaty 3.5s ease-in-out infinite; }
+  .repaso-card::after{ content:""; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(120deg, transparent, rgba(255,255,255,.18), transparent); transform:skewX(-20deg); animation:rcShine 3.8s ease-in-out infinite; }
+  @keyframes rcShine{ 0%{left:-60%} 55%,100%{left:140%} }
 
   .scrollbar-thin::-webkit-scrollbar{ width:8px; }
   .scrollbar-thin::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.2); border-radius:8px; }
@@ -224,6 +230,15 @@
   </div>
   <div id="replayBanner" class="hidden glass rounded-3xl p-4 mb-4 text-center border border-amber-300/30"><div class="text-3xl mb-1">🎓</div><div class="font-rpg font-black text-lg grad-text">¡Completaste el ciclo vital!</div><div class="text-xs opacity-80 mt-1">Modo repaso libre: toca cualquier etapa para volver a estudiarla o batirte de nuevo.</div></div>
   <div id="levelPath" class="space-y-4"></div>
+
+  <div class="repaso-card rounded-3xl p-4 mt-6 flex items-center gap-4" onclick="startReview()">
+    <div class="rc-hat shrink-0">🎩</div>
+    <div class="flex-1 min-w-0">
+      <div class="font-rpg font-black text-lg grad-text leading-tight">⚡ REPASO FINAL</div>
+      <div class="text-xs opacity-85">Enfréntate a <b>Sigmund Freud</b> en su diván. 10 preguntas mezcladas de los 4 niveles, dificultad sorpresa.</div>
+    </div>
+    <div class="shrink-0 text-2xl text-amber-300"><i class="fa-solid fa-couch"></i></div>
+  </div>
 
   <div class="grid grid-cols-2 gap-3 mt-6">
     <button onclick="showLeaderboard()" class="glass btn py-3 rounded-2xl">
@@ -376,9 +391,9 @@
    ranking global compartido. Si las dejas vacías, el ranking
    funciona localmente en este navegador (localStorage).
    ============================================================ */
-const SUPABASE_URL  = "https://ijyysrbepzmsrgdgeakc.supabase.co";   // ej: https://abcd.supabase.co
-const SUPABASE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlzcmJlcHptc3JnZGdlYWtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5OTU0MjMsImV4cCI6MjA5NzU3MTQyM30.BW4EYCqTwnAdthMx38K7yqy_HBuzRknWKQp0oknnbvs";   // anon public key
-  
+const SUPABASE_URL  = "";   // ej: https://abcd.supabase.co
+const SUPABASE_KEY  = "";   // anon public key
+
 let sb = null;
 if (SUPABASE_URL && SUPABASE_KEY && window.supabase) {
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -791,6 +806,73 @@ function prevCard(){ fcIndex=(fcIndex-1+fcDeck.length)%fcDeck.length; renderCard
 function startBattleFromStudy(){ startBattle(currentLevelId); }
 
 /* =====================================================
+   MODO REPASO · JEFE FINAL: SIGMUND FREUD
+   ===================================================== */
+const REPASO_LV = {
+  id:"repaso", emoji:"🎩", titulo:"Repaso Final", rango:"El Diván del Inconsciente",
+  monstruo:"Sigmund Freud", monIcon:"🎩",
+  color:"from-amber-400 to-rose-600",
+  intro:"El padre del psicoanálisis te examina sobre todo el ciclo vital."
+};
+const FREUD_TAUNTS = [
+  "\"Interesante error. Hábleme de su madre.\"",
+  "\"Ese fallo no fue casual: fue un acto fallido.\"",
+  "\"Su inconsciente lo traicionó. Como siempre.\"",
+  "\"Reprimió la respuesta correcta. Muy freudiano.\"",
+  "\"¿Lo ve? Resistencia pura. Anótelo en el diván.\"",
+  "\"Otro lapsus. Su superyó está de vacaciones.\"",
+  "\"Falló por ansiedad de castración intelectual.\"",
+  "\"No es que no sepa: es que no quiere saber.\"",
+  "\"Proyecta su ignorancia sobre mí. Clásico.\"",
+  "\"Su ello respondió antes que su razón. -1 vida.\""
+];
+function freudTaunt(){ return FREUD_TAUNTS[Math.floor(Math.random()*FREUD_TAUNTS.length)]; }
+
+// 10 preguntas: máx 3 por bloque, dificultad variada (orden mezclado, no ascendente)
+function pickReviewQuestions(){
+  const ids=['n1','n2','n3','n4'].filter(id=>BANK[id] && BANK[id].length);
+  const counts={}; ids.forEach(id=>counts[id]=1);          // mínimo 1 por bloque
+  let restantes=10-ids.length;
+  // repartir el resto al azar, tope 3 por bloque
+  let guard=0;
+  while(restantes>0 && guard++<200){
+    const id=ids[Math.floor(Math.random()*ids.length)];
+    if(counts[id]<3 && counts[id]<BANK[id].length){ counts[id]++; restantes--; }
+    if(ids.every(x=>counts[x]>=3 || counts[x]>=BANK[x].length)) break;
+  }
+  let chosen=[];
+  ids.forEach(id=>{
+    const pool=shuffle(BANK[id]);
+    // intentar variedad de dificultad: barajar y tomar n
+    chosen.push(...pool.slice(0, counts[id]).map(q=>({...q, _b:id})));
+  });
+  chosen=shuffle(chosen).slice(0,10);                       // mezcla dificultades
+  return chosen;
+}
+
+function startReview(){
+  const lv = REPASO_LV;
+  state = {
+    id:"repaso", lv, isReview:true,
+    qs: pickReviewQuestions(),
+    i:0, lives:MAX_LIVES, score:0, correct:0,
+    inv:{ fifty:0, skip:0 },
+    shield:false, shieldTimer:null, shieldEnd:0,
+    monMax:0, monHp:0, answered:false
+  };
+  state.monMax = Math.max(5, Math.ceil(state.qs.length*0.7));
+  state.monHp = state.monMax;
+  $('battleLevel').textContent = `🎩 Repaso Final`;
+  $('monName').textContent = `🎩 Sigmund Freud`;
+  $('monster').textContent = '🎩';
+  renderHearts(); renderInv(); renderMonHp();
+  showScreen('s-battle');
+  loadQuestion();
+  setTimeout(()=>floatText('"Recuéstese y respóndame todo." 🛋️','var(--oro)'), 350);
+}
+
+
+/* =====================================================
    COMBATE
    ===================================================== */
 function pickQuestions(id){
@@ -927,6 +1009,7 @@ function answer(idx, btn){
     } else {
       monsterAttack();
       setTimeout(()=>{ loseHeart(); floatText('¡GOLPE ENEMY! -1 VIDA 💔','var(--mal)'); }, 420);
+      if(state.isReview){ setTimeout(()=>floatText(freudTaunt(),'#fbbf24'), 1000); }
       setTimeout(()=>revealExplain(false), 520);
     }
   }
