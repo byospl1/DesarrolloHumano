@@ -220,8 +220,9 @@
 <section id="s-map" class="screen pt-14">
   <div class="text-center mt-2 mb-4">
     <h2 class="font-rpg text-2xl font-black grad-text">El Sendero del Desarrollo</h2>
-    <p class="font-freud text-xl text-amber-200">tres etapas, tres bestias del inconsciente</p>
+    <p class="font-freud text-xl text-amber-200" id="mapSub">cuatro etapas, cuatro bestias del inconsciente</p>
   </div>
+  <div id="replayBanner" class="hidden glass rounded-3xl p-4 mb-4 text-center border border-amber-300/30"><div class="text-3xl mb-1">🎓</div><div class="font-rpg font-black text-lg grad-text">¡Completaste el ciclo vital!</div><div class="text-xs opacity-80 mt-1">Modo repaso libre: toca cualquier etapa para volver a estudiarla o batirte de nuevo.</div></div>
   <div id="levelPath" class="space-y-4"></div>
 
   <div class="grid grid-cols-2 gap-3 mt-6">
@@ -375,8 +376,8 @@
    ranking global compartido. Si las dejas vacías, el ranking
    funciona localmente en este navegador (localStorage).
    ============================================================ */
-const SUPABASE_URL  = "https://ijyysrbepzmsrgdgeakc.supabase.co";   // ej: https://abcd.supabase.co
-const SUPABASE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlzcmJlcHptc3JnZGdlYWtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5OTU0MjMsImV4cCI6MjA5NzU3MTQyM30.BW4EYCqTwnAdthMx38K7yqy_HBuzRknWKQp0oknnbvs";   // anon public key
+const SUPABASE_URL  = "";   // ej: https://abcd.supabase.co
+const SUPABASE_KEY  = "";   // anon public key
 
 let sb = null;
 if (SUPABASE_URL && SUPABASE_KEY && window.supabase) {
@@ -387,10 +388,10 @@ if (SUPABASE_URL && SUPABASE_KEY && window.supabase) {
 /* Estructura de cada pregunta:
    { d:1-5 (dificultad), q:"...", o:["a","b","c","d"], a:índiceCorrecto, e:"explicación", f:"frase Freud" }
 */
-const BANK = { n1:[], n2:[], n3:[] };
+const BANK = { n1:[], n2:[], n3:[], n4:[] };
 
 /* ============ FLASHCARDS (se llenan más abajo) ============ */
-const CARDS = { n1:[], n2:[], n3:[] };
+const CARDS = { n1:[], n2:[], n3:[], n4:[] };
 
 /* ============ DEFINICIÓN DE NIVELES ============ */
 const LEVELS = [
@@ -405,7 +406,11 @@ const LEVELS = [
   { id:"n3", emoji:"🌌", titulo:"Adultez Tardía", rango:"65+ años",
     monstruo:"La Sombra del Ocaso", monIcon:"👻",
     color:"from-fuchsia-400 to-purple-600",
-    intro:"Integridad vs. desesperación. Envejecimiento exitoso, sabiduría y teorías del retiro." }
+    intro:"Integridad vs. desesperación. Envejecimiento exitoso, sabiduría y teorías del retiro." },
+  { id:"n4", emoji:"🕯️", titulo:"Conceptos de Muerte", rango:"El final del ciclo",
+    monstruo:"El Guardián del Umbral", monIcon:"💀",
+    color:"from-slate-400 to-indigo-700",
+    intro:"Muerte, duelo y sentido. Kübler-Ross, Worden, Yalom, tanatología y cuidados paliativos." }
 ];
 
 const QUESTIONS_PER_RUN = 10;   // preguntas por partida (tomadas al azar del pool)
@@ -548,6 +553,11 @@ function buildMap(){
       <div class="shrink-0 text-2xl opacity-80">${unlocked?'<i class="fa-solid fa-chevron-right"></i>':''}</div>
     </button>`;
   }).join('');
+  const allDone = LEVELS.every(l=>progress[l.id]!==undefined);
+  const banner=$('replayBanner');
+  if(banner) banner.classList.toggle('hidden', !allDone);
+  const sub=$('mapSub');
+  if(sub) sub.textContent = allDone ? 'modo repaso libre: elige la etapa que quieras dominar' : 'cuatro etapas, cuatro bestias del inconsciente';
 }
 function shakeLocked(el){ el.classList.add('hit'); setTimeout(()=>el.classList.remove('hit'),400); }
 
@@ -1090,6 +1100,68 @@ BANK.n3.push(
 BANK.n3.push(
 {d:4,q:"La 'búsqueda de sentido y significado de la vida' que el material ubica en la vejez se relaciona directamente con la crisis de:",o:["Intimidad vs. aislamiento","Integridad del yo vs. desesperación","Generatividad vs. estancamiento","Iniciativa vs. culpa"],a:1,e:"Hacer balance y buscar sentido conecta con Integridad del yo vs. desesperación: dar coherencia a la vida vivida.",f:"\"Buscar sentido al final. El examen sin segunda vuelta, querido.\""},
 {d:5,q:"Comparando las tres teorías de la etapa, ¿cuál afirmación es correcta?",o:["Actividad, continuidad y SOC dicen exactamente lo mismo","Actividad: mantenerse activo; continuidad: conservar patrones; SOC: seleccionar, optimizar y compensar","Solo la SOC habla de la vejez","Ninguna explica la satisfacción vital"],a:1,e:"Son enfoques complementarios: actividad (seguir activo), continuidad (mantener patrones) y SOC (gestión estratégica de recursos).",f:"\"Tres mapas para el mismo territorio. Más útiles que mi mapa del ello.\""}
+);
+
+/* ---- NIVEL 4 · CONCEPTOS DE MUERTE (40) ---- */
+BANK.n4.push(
+{d:1,q:"Desde la biología, la muerte se define como:",o:["Un sueño profundo reversible","El cese irreversible de las funciones biológicas que sostienen la vida","Una etapa más del desarrollo cognitivo","La pérdida temporal de la conciencia"],a:1,e:"La muerte es el cese irreversible de las funciones biológicas que sostienen la vida de un organismo.",f:"\"El fin de las funciones. Ni el inconsciente sobrevive a eso, créeme.\""},
+{d:1,q:"Además de un evento biológico, la psicología considera la muerte como:",o:["Un simple trámite legal","Una experiencia humana con implicaciones emocionales, cognitivas, sociales y culturales","Algo que no debe estudiarse","Un fenómeno solo médico"],a:1,e:"Para la psicología es también una experiencia humana con implicaciones emocionales, cognitivas, sociales y culturales.",f:"\"No solo se apaga el cuerpo: se mueve todo el aparato psíquico alrededor.\""},
+{d:1,q:"El célebre modelo de las cinco fases emocionales ante la muerte fue formulado por:",o:["Sigmund Freud","Elisabeth Kübler-Ross","Émile Durkheim","Diane Papalia"],a:1,e:"Kübler-Ross formuló el modelo de cinco fases en su libro On Death and Dying (1969).",f:"\"Cinco fases. Al menos ella numeró su duelo; yo solo numeraba traumas.\""},
+{d:1,q:"¿Cuál de estas es una de las cinco fases del modelo de Kübler-Ross?",o:["Euforia","Negociación","Sublimación","Proyección"],a:1,e:"Las cinco fases son negación, ira, negociación, depresión y aceptación.",f:"\"Negociar con la muerte. Spoiler: ella no acepta tratos.\""},
+{d:1,q:"El duelo, según el material, es la respuesta que surge tras:",o:["Un examen reprobado","Una pérdida significativa, especialmente la muerte de un ser querido","Un cambio de trabajo","Una mudanza"],a:1,e:"El duelo es la respuesta emocional, cognitiva y conductual ante una pérdida significativa, sobre todo la muerte de un ser querido.",f:"\"El duelo: trabajo psíquico real. De los pocos que nunca recomendé reprimir.\""},
+{d:1,q:"El autor del modelo de las 'tareas del duelo' es:",o:["J. William Worden","Carl Jung","Irvin Yalom","Erik Erikson"],a:0,e:"J. William Worden propuso el modelo de las tareas del duelo.",f:"\"Tareas del duelo. Por fin alguien le puso agenda al dolor.\""},
+{d:2,q:"La PRIMERA tarea del duelo según Worden es:",o:["Olvidar al fallecido","Aceptar la realidad de la pérdida","Mudarse de ciudad","Reprimir el dolor"],a:1,e:"Las tareas son: aceptar la realidad de la pérdida, trabajar las emociones del duelo, adaptarse a un medio sin el fallecido y recolocarlo emocionalmente para seguir viviendo.",f:"\"Aceptar que ya no está. El primer paso, y el que más nos cuesta.\""},
+{d:2,q:"Esperar escuchar la voz del familiar o ir a llamarlo por teléfono ilustra la dificultad en:",o:["Aceptar la realidad de la pérdida","Adaptarse al entorno laboral","La fase de ira","Los cuidados paliativos"],a:0,e:"Es un ejemplo de la primera tarea: integrar gradualmente la realidad de que la persona ya no está.",f:"\"La mente insiste en marcar un número que ya nadie contesta.\""},
+{d:2,q:"Evitar eufemismos como 'se fue a dormir' al hablar de la muerte con un niño es una recomendación de:",o:["Durkheim","Wolfelt (2001)","Yalom","Freud"],a:1,e:"Wolfelt (2001) recomienda explicar la muerte con lenguaje claro y evitar eufemismos que confunden al niño.",f:"\"Decirle 'se durmió' al niño solo le enseña a temerle a la cama.\""},
+{d:2,q:"Según Diane Papalia, la comprensión de la muerte en el niño se relaciona con:",o:["Su estatura","Su desarrollo cognitivo y emocional","El número de hermanos","Su rendimiento deportivo"],a:1,e:"Para Papalia, las ideas sobre la muerte se vuelven más complejas y realistas conforme el niño se desarrolla cognitiva y emocionalmente.",f:"\"El niño entiende la muerte según crece su mente. Lógico, no mágico.\""},
+{d:2,q:"Irvin D. Yalom considera que la conciencia de la muerte es:",o:["Algo a evitar siempre","Una de las preocupaciones fundamentales del ser humano","Un tema sin valor terapéutico","Exclusiva de la vejez"],a:1,e:"Para Yalom, la conciencia de la propia mortalidad es una preocupación existencial fundamental.",f:"\"Pensar en morir. Incómodo, sí; pero más honesto que negarlo.\""},
+{d:2,q:"Una recomendación para acompañar el duelo de un niño es:",o:["Romper sus rutinas","Mantener rutinas estables y brindar seguridad emocional","Prohibirle llorar","Ocultarle lo ocurrido"],a:1,e:"Se recomienda mantener rutinas estables, permitir que exprese emociones y brindar seguridad emocional.",f:"\"Rutina y seguridad. El niño necesita piso firme cuando el mundo tiembla.\""},
+{d:3,q:"Que una viuda deba asumir tareas económicas que antes gestionaba su esposo corresponde a la tarea del duelo de:",o:["Aceptar la realidad","Trabajar el dolor","Adaptarse a un medio donde el fallecido está ausente","Negar la pérdida"],a:2,e:"Adaptarse a un entorno sin el fallecido implica reorganizar roles y reconstruir la identidad personal.",f:"\"Reaprender la vida diaria sin esa persona. Adaptación pura.\""},
+{d:3,q:"La cuarta tarea ('recolocar emocionalmente al fallecido') NO significa:",o:["Mantener su recuerdo de forma saludable","Continuar con la propia vida","Olvidar por completo al ser querido","Encontrar un lugar para el vínculo"],a:2,e:"No implica olvidar, sino hallar una forma saludable de mantener el recuerdo mientras se continúa viviendo.",f:"\"Recordar sin quedar atrapado. Ni olvido total ni anclaje eterno.\""},
+{d:3,q:"Según Yalom, aceptar que la vida tiene límites lleva a las personas a:",o:["Desesperanzarse","Valorar más el tiempo y priorizar lo importante","Aislarse del mundo","Negar sus relaciones"],a:1,e:"Yalom sostiene que aceptar la finitud lleva a valorar el tiempo, priorizar lo importante y fortalecer relaciones.",f:"\"Saber que el reloj corre te hace dejar de perder el tiempo.\""},
+{d:3,q:"La 'integración de la muerte a la vida' consiste en:",o:["Obsesionarse con morir","Aceptar la finitud y reconocer la muerte como parte del ciclo vital","Ignorar la propia mortalidad","Temer toda pérdida"],a:1,e:"Es aceptar la finitud humana y verla como parte del ciclo vital, con una actitud adaptativa ante pérdidas y envejecimiento.",f:"\"Integrar la muerte no es morbo: es dejar de huir de lo inevitable.\""},
+{d:3,q:"Para Kübler-Ross, hablar abiertamente de la muerte:",o:["Aumenta la ansiedad","Disminuye la ansiedad y el miedo asociados a ella","No tiene ningún efecto","Debe evitarse con pacientes"],a:1,e:"Observó que hablar de la muerte reduce la ansiedad y el miedo, y favorece paz emocional y autenticidad.",f:"\"Nombrar el miedo lo encoge. Callarlo solo lo engorda.\""},
+{d:3,q:"El suicidio se define como:",o:["Un accidente involuntario","El acto deliberado de causar la propia muerte","Una enfermedad contagiosa","Un trastorno del sueño"],a:1,e:"El suicidio es el acto deliberado de causar la propia muerte y constituye un problema de salud pública.",f:"\"Tema serio: aquí no hay chiste que valga, solo escucha y ayuda.\""},
+{d:3,q:"Según la World Health Organization, el suicidio:",o:["Es inevitable","Puede prevenirse mediante intervenciones oportunas y apoyo adecuado","Solo ocurre en la vejez","No es un problema de salud pública"],a:1,e:"La OMS lo señala como una de las principales causas de muerte que puede prevenirse con intervención y apoyo oportunos.",f:"\"Prevenible. Esa palabra importa más que cualquier teoría.\""},
+{d:3,q:"Émile Durkheim, en su obra El suicidio (1897), aportó que este fenómeno:",o:["Depende solo de la biología","También está influido por las condiciones sociales","Es puramente genético","No puede estudiarse"],a:1,e:"Durkheim mostró que el suicidio no depende solo de factores individuales, sino también de las condiciones sociales.",f:"\"Durkheim miró la sociedad, no solo el diván. A veces el contexto pesa más.\""},
+{d:4,q:"Los 'derechos de morir' garantizan principalmente:",o:["Acelerar la muerte de cualquiera","Afrontar el final de la vida con dignidad, autonomía y cuidados que alivien el sufrimiento","Eliminar los cuidados paliativos","Decidir por el paciente sin consultarlo"],a:1,e:"Incluyen el derecho a la información, a decidir sobre los tratamientos, a recibir cuidados paliativos y a ser acompañado emocionalmente.",f:"\"Dignidad hasta el final. El paciente sigue siendo persona, no expediente.\""},
+{d:4,q:"Un factor PROTECTOR frente al riesgo suicida es:",o:["Aislamiento social","Apoyo familiar y social, y acceso a servicios de salud mental","Desesperanza","Consumo problemático de sustancias"],a:1,e:"Factores protectores: apoyo familiar y social, acceso a salud mental, habilidades de resolución de problemas, sentido de pertenencia y valores que cuidan la vida.",f:"\"Redes de apoyo. El antídoto más real contra la desesperanza.\""},
+{d:4,q:"La psicología entiende el suicidio como un fenómeno:",o:["De causa única","Multifactorial, asociado a un intenso sufrimiento emocional","Sin relación con las emociones","Imposible de prevenir"],a:1,e:"Es multifactorial y suele asociarse a desesperanza, dolor psicológico y dificultad para ver alternativas; el apoyo profesional ayuda.",f:"\"Nunca una sola causa. El dolor humano rara vez cabe en una casilla.\""},
+{d:4,q:"En la adolescencia, el riesgo suicida se asocia especialmente a:",o:["Jubilación","Cambios emocionales, sociales y de identidad, presión social y conflictos familiares","Nido vacío","Menopausia"],a:1,e:"La adolescencia muestra mayor vulnerabilidad por los cambios de identidad, la presión social y los conflictos familiares.",f:"\"La adolescencia ya es tormenta; sumar soledad la vuelve peligrosa.\""},
+{d:4,q:"Según la OMS, los cuidados paliativos buscan:",o:["Acelerar la muerte","Mejorar la calidad de vida mediante la prevención y alivio del sufrimiento físico, psicológico, social y espiritual","Curar toda enfermedad","Sustituir a la familia"],a:1,e:"Los cuidados paliativos mejoran la calidad de vida de pacientes y familias aliviando el sufrimiento en sus distintas dimensiones.",f:"\"No curan, pero acompañan. A veces aliviar vale tanto como sanar.\""},
+{d:4,q:"El papel del psicólogo en cuidados paliativos incluye:",o:["Solo administrar fármacos","Reducir el sufrimiento emocional, fortalecer el afrontamiento y acompañar el duelo anticipado","Decidir los tratamientos médicos","Aislar al paciente"],a:1,e:"El psicólogo reduce el sufrimiento emocional, favorece la aceptación, mejora la comunicación familiar y acompaña el duelo anticipado.",f:"\"Acompañar el adiós. El trabajo más humano que existe.\""},
+{d:4,q:"Las reacciones de un niño ante la muerte de un ser querido pueden incluir:",o:["Solo indiferencia","Tristeza, miedo, confusión, culpa y dificultades escolares","Únicamente alegría","Ningún cambio emocional"],a:1,e:"Puede experimentar tristeza, miedo, confusión, enojo, culpa, ansiedad, problemas de conducta y dificultades escolares.",f:"\"El niño no llora 'menos': llora distinto. Hay que saber mirarlo.\""},
+{d:4,q:"La aplicación práctica de integrar la muerte en psicología incluye:",o:["Negar la pérdida","Intervenciones en duelo, cuidados paliativos, terapia existencial y tanatología","Evitar todo acompañamiento","Prohibir hablar del tema"],a:1,e:"Se trabaja mediante intervenciones en duelo, cuidados paliativos, terapia existencial, acompañamiento a enfermos terminales y educación para la muerte.",f:"\"Tanatología: estudiar el final para cuidar mejor la vida.\""},
+{d:5,q:"Las fases de Kübler-Ross NO deben entenderse como:",o:["Respuestas emocionales posibles","Un proceso siempre lineal y universal que todos viven igual y en orden","Un aporte para acompañar el final de la vida","Negación, ira, negociación, depresión y aceptación"],a:1,e:"El material aclara que estas etapas no siempre ocurren en orden ni todas las personas las experimentan de la misma manera.",f:"\"El duelo no es escalera fija: cada quien sube y baja a su modo.\""},
+{d:5,q:"Un paciente terminal que pide participar en las decisiones sobre su tratamiento ejerce su derecho a morir y, según Kübler-Ross, necesita ser:",o:["Ignorado para protegerlo","Escuchado, comprendido y tratado como persona capaz de decidir","Apartado de su familia","Privado de información"],a:1,e:"Kübler-Ross señaló que los pacientes terminales necesitan ser escuchados, comprendidos y reconocidos como capaces de participar en sus decisiones.",f:"\"Hasta el final, autonomía. Decidir es seguir siendo dueño de uno mismo.\""},
+{d:5,q:"Relacionar los cuidados paliativos con la etapa de 'integridad vs. desesperación' de Erikson permite ver que el final de la vida puede favorecer:",o:["Estancamiento","Sentimientos de aceptación, integridad y bienestar emocional","Confusión de identidad","Aislamiento garantizado"],a:1,e:"En la adultez tardía se reflexiona sobre la propia historia; los paliativos pueden favorecer aceptación, integridad y bienestar.",f:"\"Cerrar la vida con un 'valió la pena'. Eso es integridad de verdad.\""},
+{d:5,q:"¿Por qué se afirma que el suicidio requiere una mirada del desarrollo humano?",o:["Porque solo afecta a una edad","Porque los factores de riesgo y protección varían según la etapa de la vida","Porque es siempre igual en todos","Porque no tiene factores sociales"],a:1,e:"Los factores de riesgo y protección cambian según la etapa: adolescencia, adultez y adultez tardía presentan vulnerabilidades distintas.",f:"\"Cada edad tiene su grieta. Prevenir exige saber dónde mirar.\""},
+{d:5,q:"Según Yalom, reflexionar sobre la muerte promueve:",o:["Desesperanza y parálisis","Una vida más plena y auténtica","La negación de la finitud","El olvido de las relaciones"],a:1,e:"Para Yalom, lejos de promover desesperanza, confrontar la finitud impulsa una vida más plena, auténtica y con sentido.",f:"\"Mirar el final de frente no deprime: despierta. Paradoja existencial.\""},
+{d:5,q:"La conclusión del tema del suicidio en el material subraya que la prevención se centra en:",o:["Una sola intervención médica","Identificar factores de riesgo, fortalecer factores protectores y promover acceso oportuno a apoyo","Ocultar el problema","Culpar a la persona"],a:1,e:"La prevención implica detección temprana, atención profesional, redes de apoyo, educación en salud mental y reducción del estigma.",f:"\"Detectar, acompañar, destigmatizar. Tres verbos que salvan vidas.\""},
+{d:5,q:"Un beneficio psicológico de integrar la muerte, respaldado por Yalom (2008), es que:",o:["Aumenta el miedo a morir","Incrementa la apreciación de la vida y de las relaciones significativas","Reduce la resiliencia","Impide establecer prioridades"],a:1,e:"Yalom plantea que aceptar la finitud lleva a valorar más el presente, las relaciones y las experiencias significativas.",f:"\"Apreciar lo que hay porque sabes que no es para siempre. Sabiduría.\""},
+{d:5,q:"Frente a un duelo infantil que genera culpa y dificultades significativas, la intervención psicológica busca, entre otras cosas:",o:["Que el niño olvide al fallecido","Ayudarlo a comprender la pérdida, expresar emociones y reducir la culpa","Reprimir sus preguntas","Aislarlo de la familia"],a:1,e:"La intervención ayuda al niño a comprender la pérdida, expresar emociones, reducir la culpa, afrontar y adaptarse a la nueva realidad familiar.",f:"\"El niño no debe cargar culpa por una muerte. Ayúdalo a soltarla.\""},
+{d:5,q:"La diferencia clave entre la mirada de Durkheim y la mirada estrictamente psicológica del suicidio es que Durkheim enfatiza:",o:["Los factores intrapsíquicos","La influencia de las condiciones y la cohesión sociales","La genética","La biología cerebral"],a:1,e:"Durkheim aportó la dimensión social: la integración y las condiciones sociales influyen en las tasas de suicidio, más allá de lo individual.",f:"\"Él miró el tejido social; yo, el diván. Juntos, mejor diagnóstico.\""},
+{d:5,q:"Integrar la muerte a la vida, en términos del desarrollo humano, se relaciona con afrontar de manera adaptativa:",o:["Solo la muerte ajena","Las pérdidas, el envejecimiento y la propia mortalidad","Únicamente la infancia","Solo problemas laborales"],a:1,e:"Implica desarrollar una actitud de aceptación que permita afrontar las pérdidas, el envejecimiento y la propia mortalidad de forma adaptativa.",f:"\"Aceptar que envejeces y partirás. Duro, pero libera como nada.\""}
+);
+
+/* ---- NIVEL 4 · FLASHCARDS (10) ---- */
+CARDS.n4.push(
+{q:"Definición de muerte (biológica + psicológica)",a:"Cese irreversible de las funciones biológicas; además, una experiencia humana con implicaciones emocionales, cognitivas, sociales y culturales."},
+{q:"Las 5 fases de Kübler-Ross (1969)",a:"Negación, ira, negociación, depresión y aceptación. No siempre ocurren en orden ni todas las personas las viven igual."},
+{q:"Las 4 tareas del duelo de Worden",a:"1) Aceptar la realidad de la pérdida. 2) Trabajar las emociones y el dolor. 3) Adaptarse a un medio sin el fallecido. 4) Recolocarlo emocionalmente y seguir viviendo."},
+{q:"Aporte de Irvin Yalom",a:"La conciencia de la muerte es una preocupación existencial fundamental; aceptarla lleva a valorar el tiempo, priorizar lo importante y vivir con más plenitud y autenticidad."},
+{q:"Muerte en la infancia (Papalia / Wolfelt)",a:"La comprensión depende del desarrollo cognitivo-emocional. Explicar con lenguaje claro, evitar eufemismos ('se fue a dormir'), permitir expresar emociones y mantener rutinas."},
+{q:"Derechos de morir",a:"Afrontar el final con dignidad y autonomía: derecho a información, a decidir tratamientos, a cuidados paliativos y a acompañamiento emocional."},
+{q:"Suicidio: definición y enfoque",a:"Acto deliberado de causar la propia muerte; problema de salud pública, multifactorial y prevenible con intervención y apoyo oportunos (OMS)."},
+{q:"Factores de riesgo vs. protectores del suicidio",a:"Riesgo: trastornos mentales, dolor crónico, aislamiento, conflictos, desesperanza. Protectores: apoyo familiar/social, acceso a salud mental, habilidades de afrontamiento, sentido de pertenencia."},
+{q:"Aporte de Émile Durkheim (1897)",a:"En 'El suicidio' mostró que no depende solo de factores individuales, sino también de las condiciones y la cohesión sociales."},
+{q:"Cuidados paliativos (OMS) y Erikson",a:"Mejoran la calidad de vida aliviando el sufrimiento físico, psicológico, social y espiritual. Conectan con integridad vs. desesperación: favorecen aceptación y bienestar al final de la vida."}
+);
+
+/* ---- NIVEL 4 · EXTRA (completar 40) ---- */
+BANK.n4.push(
+{d:1,q:"El libro de Elisabeth Kübler-Ross donde formuló las cinco fases se titula:",o:["El malestar en la cultura","On Death and Dying (1969)","El suicidio","La interpretación de los sueños"],a:1,e:"Kübler-Ross expuso el modelo de las cinco fases en On Death and Dying (1969), tras sus seminarios con pacientes terminales.",f:"\"Un libro que rompió tabúes. Hablar de morir, por fin, sin susurros.\""},
+{d:2,q:"La psicología, al estudiar la muerte, se ocupa entre otras cosas de:",o:["La conciencia de la propia mortalidad y los procesos de duelo","La química de la descomposición","Los trámites funerarios","La genética del envejecimiento"],a:0,e:"Estudia la conciencia de la mortalidad, las reacciones ante la pérdida, los procesos de duelo y la adaptación de pacientes terminales y sus familias.",f:"\"No estudiamos el cadáver: estudiamos a quien queda mirándolo.\""}
 );
 
 </script>
