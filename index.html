@@ -8,92 +8,114 @@
 
 <!-- Tailwind -->
 <script src="https://cdn.tailwindcss.com"></script>
+<script>
+  /* Remapea los acentos usados en el markup a la paleta de marca
+     (salvia / crema / ocre / arcilla) sin tocar cada clase. */
+  tailwind.config = { theme: { extend: { colors: {
+    amber:   { 200:'#a9803a', 300:'#9c7433', 400:'#b3893f', 500:'#a67c37', 700:'#7c5c28' },
+    violet:  { 300:'#6f9484', 400:'#6f9484', 600:'#4f7565' },
+    purple:  { 600:'#3f5d4f' },
+    fuchsia: { 400:'#7fa08f', 600:'#4f7565' },
+    cyan:    { 300:'#5c8a94' },
+    rose:    { 300:'#c0655a' },
+    emerald: { 300:'#4e8163' },
+    stone:   { 400:'#9a8f7a' },
+    orange:  { 400:'#c8956f' },
+    indigo:  { 700:'#3f5d4f' },
+    slate:   { 400:'#8a938c' }
+  } } } };
+</script>
 <!-- FontAwesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<!-- Fuentes -->
+<!-- Fuentes: sans neutras y modernas -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet">
 <!-- Supabase (para ranking persistente; opcional) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
   :root{
-    --noche:#1a1033;        /* índigo del inconsciente */
-    --noche2:#2b1a52;
-    --noche3:#0f0a22;
-    --sinapsis1:#8b5cf6;    /* violeta */
-    --sinapsis2:#ec4899;    /* magenta */
-    --sinapsis3:#22d3ee;    /* cian */
-    --oro:#fbbf24;          /* corona / acierto */
-    --pergamino:#f7f1e3;
-    --pergamino2:#efe6d0;
-    --tinta:#2a1c12;
-    --vida:#ef4444;
-    --escudo:#38bdf8;
-    --ok:#34d399;
-    --mal:#fb7185;
+    /* Paleta profesional · salvia terapéutico + crema (modo claro) */
+    --bg:#f3efe6;           /* crema cálida */
+    --bg2:#ece5d7;
+    --surface:#fffdf8;      /* tarjeta blanca cálida */
+    --surface2:#f6f1e7;
+    --sage:#6f9484;         /* verde salvia primario */
+    --sage-2:#5a7d6d;
+    --sage-deep:#3f5d4f;    /* verde bosque */
+    --ink:#25332b;          /* texto */
+    --muted:#63706a;
+    --line:rgba(37,51,43,.12);
+    --line-strong:rgba(37,51,43,.18);
+    --clay:#c17e63;         /* terracota cálido (vida / acento) */
+    --gold:#b3893f;         /* ocre logro */
+    --shadow: 0 1px 2px rgba(37,51,43,.06), 0 10px 28px rgba(37,51,43,.09);
+    /* Alias heredados (para estilos en línea del markup antiguo) */
+    --noche:var(--bg); --noche2:var(--sage-deep); --noche3:var(--bg2);
+    --sinapsis1:var(--sage); --sinapsis2:var(--sage-2); --sinapsis3:var(--sage-deep);
+    --oro:var(--gold); --pergamino:var(--ink); --pergamino2:var(--surface2);
+    --tinta:var(--ink); --vida:var(--clay); --escudo:#5c8a94; --ok:#4e8163; --mal:#c0655a;
   }
   *{ -webkit-tap-highlight-color: transparent; }
   html,body{ margin:0; padding:0; }
   body{
-    font-family:'Nunito',system-ui,sans-serif;
-    color:var(--pergamino);
+    font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+    color:var(--ink);
     background:
-      radial-gradient(1200px 600px at 15% -10%, rgba(139,92,246,.35), transparent 60%),
-      radial-gradient(900px 500px at 110% 10%, rgba(236,72,153,.28), transparent 55%),
-      radial-gradient(900px 700px at 50% 120%, rgba(34,211,238,.18), transparent 60%),
-      var(--noche);
+      radial-gradient(1100px 560px at 12% -12%, rgba(111,148,132,.20), transparent 60%),
+      radial-gradient(880px 480px at 112% 6%, rgba(193,126,99,.14), transparent 55%),
+      radial-gradient(900px 700px at 50% 122%, rgba(63,93,79,.10), transparent 62%),
+      var(--bg);
     min-height:100vh;
     overflow-x:hidden;
   }
-  .font-rpg{ font-family:'Cinzel',serif; letter-spacing:.02em; }
-  .font-freud{ font-family:'Caveat',cursive; }
+  .font-rpg{ font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif; letter-spacing:-.01em; }
+  .font-freud{ font-family:'Plus Jakarta Sans',sans-serif; font-style:italic; font-weight:500; color:var(--sage-deep); }
 
-  /* Estrellas / neuronas de fondo */
+  /* Motas suaves de fondo (antes estrellas) */
   .stars{ position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
-  .star{ position:absolute; width:3px; height:3px; border-radius:50%; background:#fff;
-    opacity:.5; animation: twinkle 3s infinite ease-in-out; }
-  @keyframes twinkle{ 0%,100%{opacity:.15; transform:scale(.7)} 50%{opacity:.8; transform:scale(1.2)} }
+  .star{ position:absolute; width:5px; height:5px; border-radius:50%; background:var(--sage);
+    opacity:.18; animation: twinkle 5s infinite ease-in-out; }
+  @keyframes twinkle{ 0%,100%{opacity:.06; transform:scale(.7)} 50%{opacity:.24; transform:scale(1.1)} }
 
   .screen{ position:relative; z-index:1; display:none; animation: fadeIn .4s ease; }
   .screen.active{ display:block; }
   @keyframes fadeIn{ from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none} }
 
-  .glass{ background:rgba(43,26,82,.55); backdrop-filter:blur(10px);
-    border:1px solid rgba(255,255,255,.10); }
-  .card-parch{ background:linear-gradient(180deg,var(--pergamino),var(--pergamino2));
-    color:var(--tinta); }
+  .glass{ background:rgba(255,253,248,.82); backdrop-filter:blur(10px);
+    border:1px solid var(--line); box-shadow:var(--shadow); }
+  .card-parch{ background:var(--surface); color:var(--ink); border:1px solid var(--line); }
 
-  .grad-text{ background:linear-gradient(100deg,var(--sinapsis3),var(--sinapsis1) 45%,var(--sinapsis2));
+  .grad-text{ background:linear-gradient(100deg,var(--sage-deep),var(--sage));
     -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .grad-btn{ background:linear-gradient(100deg,var(--sinapsis1),var(--sinapsis2)); }
-  .grad-btn:active{ transform:scale(.97); }
+  .grad-btn{ background:linear-gradient(100deg,var(--sage),var(--sage-2)); color:#fff; }
+  .grad-btn:active{ transform:scale(.98); }
 
-  .btn{ min-height:48px; border-radius:16px; font-weight:800; transition:transform .12s, box-shadow .2s, filter .2s;
-    box-shadow:0 8px 0 rgba(0,0,0,.25), 0 12px 24px rgba(0,0,0,.35); }
-  .btn:active{ transform:translateY(4px); box-shadow:0 4px 0 rgba(0,0,0,.25); }
-  .btn:focus-visible{ outline:3px solid var(--oro); outline-offset:2px; }
+  .btn{ min-height:48px; border-radius:14px; font-weight:700; transition:transform .12s, box-shadow .2s, filter .2s;
+    box-shadow:0 1px 2px rgba(37,51,43,.08), 0 6px 16px rgba(37,51,43,.10); }
+  .btn:hover{ filter:brightness(1.02); }
+  .btn:active{ transform:translateY(1px); box-shadow:0 1px 2px rgba(37,51,43,.10); }
+  .btn:focus-visible{ outline:3px solid var(--sage); outline-offset:2px; }
 
-  /* Corazones de vida */
-  .heart{ font-size:1.15rem; filter:drop-shadow(0 2px 2px rgba(0,0,0,.4)); transition:transform .2s, opacity .2s; }
-  .heart.lost{ opacity:.25; transform:scale(.8); filter:grayscale(1); }
+  /* Corazones de vida (íconos) */
+  .heart{ font-size:1.05rem; color:var(--clay); transition:transform .2s, opacity .2s, color .2s; }
+  .heart.lost{ opacity:.5; color:var(--line-strong); }
   @keyframes heartPop{ 0%{transform:scale(1)} 40%{transform:scale(1.5)} 100%{transform:scale(1)} }
   .heart.pop{ animation:heartPop .4s; }
 
-  /* Arena */
-  .arena{ position:relative; height:34vh; min-height:200px; border-radius:22px; overflow:hidden;
+  /* Arena de "sesión" */
+  .arena{ position:relative; height:34vh; min-height:200px; border-radius:20px; overflow:hidden;
     background:
-      radial-gradient(60% 80% at 50% 120%, rgba(139,92,246,.4), transparent 70%),
-      linear-gradient(180deg, rgba(15,10,34,.2), rgba(15,10,34,.7)),
-      repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0 2px, transparent 2px 40px);
-    border:2px solid rgba(255,255,255,.12); }
+      radial-gradient(60% 80% at 50% 120%, rgba(111,148,132,.28), transparent 70%),
+      linear-gradient(180deg, #fbfaf4, #edf1ea);
+    border:1px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.7); }
   .floor{ position:absolute; left:0; right:0; bottom:0; height:22%;
-    background:linear-gradient(180deg, rgba(34,211,238,.18), rgba(15,10,34,.6)); }
-  .fighter{ position:absolute; bottom:18%; font-size: clamp(2.6rem, 11vw, 4.4rem);
-    filter:drop-shadow(0 8px 8px rgba(0,0,0,.5)); transition: transform .18s; }
-  .hero{ left:8%; }
-  .monster{ right:8%; animation: floaty 2.6s ease-in-out infinite; }
+    background:linear-gradient(180deg, rgba(111,148,132,.18), rgba(63,93,79,.12)); }
+  .fighter{ position:absolute; bottom:18%; font-size: clamp(2.4rem, 10vw, 4rem);
+    filter:drop-shadow(0 8px 10px rgba(37,51,43,.18)); transition: transform .18s; }
+  .hero{ left:9%; color:var(--sage-deep); }
+  .monster{ right:9%; color:var(--clay); animation: floaty 2.6s ease-in-out infinite; }
   @keyframes floaty{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
   .hero.attack{ animation: heroLunge .5s ease; }
   @keyframes heroLunge{ 0%{transform:none} 35%{transform:translateX(160%) translateY(-30%) rotate(-12deg) scale(1.1)} 60%{transform:translateX(160%) translateY(-30%)} 100%{transform:none} }
@@ -103,71 +125,81 @@
   .hero.hit{ animation: shake .4s; }
   @keyframes shake{ 0%,100%{transform:none} 20%{transform:translateX(-8px) rotate(-4deg)} 40%{transform:translateX(8px) rotate(4deg)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)} }
 
-  .float-dmg{ position:absolute; font-weight:900; font-size: clamp(1rem,5vw,1.7rem); pointer-events:none;
-    text-shadow:0 2px 6px rgba(0,0,0,.6); animation: floatUp 1s ease forwards; z-index:5; }
+  .float-dmg{ position:absolute; font-weight:800; font-size: clamp(1rem,5vw,1.6rem); pointer-events:none;
+    text-shadow:0 2px 6px rgba(255,255,255,.7); animation: floatUp 1s ease forwards; z-index:5; }
   @keyframes floatUp{ 0%{opacity:0; transform:translateY(0) scale(.6)} 20%{opacity:1; transform:translateY(-10px) scale(1.2)} 100%{opacity:0; transform:translateY(-60px) scale(1)} }
 
-  .hpbar{ height:14px; border-radius:999px; background:rgba(0,0,0,.35); overflow:hidden; border:1px solid rgba(255,255,255,.2); }
-  .hpfill{ height:100%; background:linear-gradient(90deg,#f97316,#ef4444); transition:width .5s cubic-bezier(.2,.8,.2,1); }
+  .hpbar{ height:12px; border-radius:999px; background:rgba(37,51,43,.10); overflow:hidden; border:1px solid var(--line); }
+  .hpfill{ height:100%; background:linear-gradient(90deg,var(--clay),#a85f45); transition:width .5s cubic-bezier(.2,.8,.2,1); }
 
   /* Opciones */
-  .opt{ min-height:48px; text-align:left; border-radius:14px; font-weight:700;
-    background:rgba(247,241,227,.96); color:var(--tinta); border:2px solid transparent;
-    transition: transform .1s, border-color .2s, background .2s; }
-  .opt:hover{ transform:translateY(-2px); }
+  .opt{ min-height:48px; text-align:left; border-radius:12px; font-weight:600;
+    background:var(--surface); color:var(--ink); border:1.5px solid var(--line);
+    transition: transform .1s, border-color .2s, background .2s, box-shadow .2s; }
+  .opt:hover{ transform:translateY(-1px); border-color:var(--sage); box-shadow:var(--shadow); }
   .opt:active{ transform:scale(.99); }
-  .opt.correct{ background:#bbf7d0; border-color:#16a34a; }
-  .opt.wrong{ background:#fecdd3; border-color:#e11d48; }
+  .opt.correct{ background:#e5efe7; border-color:var(--ok); color:#254c37; }
+  .opt.wrong{ background:#f6e4e0; border-color:var(--mal); color:#7a2e26; }
   .opt.dim{ opacity:.4; }
   .opt:disabled{ cursor:default; }
-  .opt:focus-visible{ outline:3px solid var(--sinapsis1); outline-offset:2px; }
+  .opt:focus-visible{ outline:3px solid var(--sage); outline-offset:2px; }
 
   /* Path / mapa */
   .node{ transition:transform .2s; }
   .node:active{ transform:scale(.96); }
-  .node.locked{ filter:grayscale(.7) brightness(.7); }
+  .node.locked{ filter:grayscale(.5) brightness(.98); opacity:.7; }
 
   /* Modal */
   .modal{ position:fixed; inset:0; z-index:50; display:none; align-items:center; justify-content:center; padding:14px;
-    background:rgba(8,5,18,.8); backdrop-filter:blur(4px); }
+    background:rgba(37,51,43,.42); backdrop-filter:blur(4px); }
   .modal.active{ display:flex; }
-  .modal-box{ width:100%; max-width:520px; max-height:95vh; overflow-y:auto; border-radius:24px; }
+  .modal-box{ width:100%; max-width:520px; max-height:95vh; overflow-y:auto; border-radius:22px; }
 
   /* Ruleta */
   .wheel-wrap{ position:relative; width:min(78vw,320px); height:min(78vw,320px); margin:0 auto; }
-  .wheel{ width:100%; height:100%; border-radius:50%; border:10px solid #fff;
-    box-shadow:0 0 0 6px var(--noche2), 0 18px 40px rgba(0,0,0,.5);
+  .wheel{ width:100%; height:100%; border-radius:50%; border:8px solid #fff;
+    box-shadow:0 0 0 5px var(--sage), 0 16px 34px rgba(37,51,43,.22);
     transition: transform 4.5s cubic-bezier(.12,.67,.16,1); }
   .wheel-pointer{ position:absolute; top:-6px; left:50%; transform:translateX(-50%);
-    font-size:2rem; color:var(--oro); filter:drop-shadow(0 2px 3px rgba(0,0,0,.6)); z-index:2; }
+    font-size:2rem; color:var(--gold); filter:drop-shadow(0 2px 3px rgba(37,51,43,.35)); z-index:2; }
   .wheel-hub{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-    width:54px; height:54px; border-radius:50%; background:var(--noche2); border:4px solid #fff;
-    display:flex; align-items:center; justify-content:center; font-size:1.5rem; z-index:2; }
+    width:54px; height:54px; border-radius:50%; background:var(--sage-deep); border:4px solid #fff; color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:1.4rem; z-index:2; }
 
   /* Flashcard 3D */
   .fc-scene{ perspective:1400px; }
   .fc-inner{ position:relative; width:100%; min-height:230px; transform-style:preserve-3d;
     transition: transform .6s cubic-bezier(.2,.8,.2,1); cursor:pointer; }
   .fc-inner.flipped{ transform: rotateY(180deg); }
-  .fc-face{ position:absolute; inset:0; backface-visibility:hidden; border-radius:20px; padding:22px;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
-  .fc-front{ background:linear-gradient(160deg,var(--sinapsis1),var(--noche2)); }
-  .fc-back{ background:linear-gradient(160deg,var(--sinapsis2),#7c2d6b); transform: rotateY(180deg); }
+  .fc-face{ position:absolute; inset:0; backface-visibility:hidden; border-radius:18px; padding:22px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+    box-shadow:var(--shadow); }
+  .fc-front{ background:linear-gradient(160deg,var(--sage),var(--sage-deep)); color:#fff; }
+  .fc-back{ background:var(--surface); color:var(--ink); border:1px solid var(--line); transform: rotateY(180deg); }
 
   .chip{ display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .7rem; border-radius:999px;
-    font-weight:800; font-size:.8rem; }
+    font-weight:700; font-size:.8rem; }
 
-  .pulse-ring{ animation: pulsering 1.6s infinite; }
-  @keyframes pulsering{ 0%{box-shadow:0 0 0 0 rgba(251,191,36,.6)} 70%{box-shadow:0 0 0 14px rgba(251,191,36,0)} 100%{box-shadow:0 0 0 0 rgba(251,191,36,0)} }
-  @keyframes freudGlow{ 0%,100%{box-shadow:0 0 22px rgba(245,158,11,.35), inset 0 0 20px rgba(236,72,153,.15)} 50%{box-shadow:0 0 40px rgba(245,158,11,.7), inset 0 0 28px rgba(236,72,153,.35)} }
-  .repaso-card{ position:relative; overflow:hidden; cursor:pointer; border:1px solid rgba(251,191,36,.45); background:linear-gradient(135deg, rgba(120,53,15,.55), rgba(76,5,40,.55)); animation:freudGlow 2.6s ease-in-out infinite; transition:transform .15s ease; }
+  .pulse-ring{ animation: pulsering 1.8s infinite; }
+  @keyframes pulsering{ 0%{box-shadow:0 0 0 0 rgba(179,137,63,.5)} 70%{box-shadow:0 0 0 12px rgba(179,137,63,0)} 100%{box-shadow:0 0 0 0 rgba(179,137,63,0)} }
+  @keyframes freudGlow{ 0%,100%{box-shadow:0 6px 20px rgba(179,137,63,.14)} 50%{box-shadow:0 8px 28px rgba(179,137,63,.26)} }
+  .repaso-card{ position:relative; overflow:hidden; cursor:pointer; border:1px solid rgba(179,137,63,.40); background:linear-gradient(135deg,#fbf5e8,#f3efe1); animation:freudGlow 3.2s ease-in-out infinite; transition:transform .15s ease; }
   .repaso-card:active{ transform:scale(.98); }
-  .repaso-card .rc-hat{ font-size:2.6rem; filter:drop-shadow(0 4px 8px rgba(0,0,0,.5)); animation:floaty 3.5s ease-in-out infinite; }
-  .repaso-card::after{ content:""; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(120deg, transparent, rgba(255,255,255,.18), transparent); transform:skewX(-20deg); animation:rcShine 3.8s ease-in-out infinite; }
+  .repaso-card .rc-hat{ font-size:2.4rem; color:var(--sage-deep); filter:drop-shadow(0 4px 8px rgba(37,51,43,.18)); animation:floaty 3.5s ease-in-out infinite; }
+  .repaso-card::after{ content:""; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(120deg, transparent, rgba(255,255,255,.45), transparent); transform:skewX(-20deg); animation:rcShine 4.2s ease-in-out infinite; }
   @keyframes rcShine{ 0%{left:-60%} 55%,100%{left:140%} }
 
+  /* Trimestres */
+  .trim-tabs{ display:flex; gap:.5rem; }
+  .trim-tab{ flex:1; min-height:auto; text-align:left; border-radius:14px; padding:.7rem .9rem; cursor:pointer;
+    border:1.5px solid var(--line); background:var(--surface); color:var(--ink); transition:border-color .2s, box-shadow .2s, opacity .2s; }
+  .trim-tab .tt-k{ font-size:.68rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .trim-tab .tt-n{ font-weight:700; font-size:.98rem; line-height:1.15; }
+  .trim-tab.active{ border-color:var(--sage); box-shadow:0 0 0 1px var(--sage), var(--shadow); background:linear-gradient(180deg,#fff,#f3f6f1); }
+  .trim-tab.locked{ opacity:.6; cursor:default; }
+
   .scrollbar-thin::-webkit-scrollbar{ width:8px; }
-  .scrollbar-thin::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.2); border-radius:8px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb{ background:rgba(37,51,43,.18); border-radius:8px; }
 
   @media (prefers-reduced-motion: reduce){
     *{ animation:none !important; transition:none !important; }
@@ -198,21 +230,22 @@
 <!-- ================= LOGIN ================= -->
 <section id="s-login" class="screen active">
   <div class="text-center pt-6 pb-2">
-    <div class="text-6xl mb-2">🧠⚔️</div>
-    <h1 class="font-rpg text-3xl sm:text-4xl font-black grad-text leading-tight">Viaje por el<br>Ciclo Vital</h1>
-    <p class="font-freud text-2xl text-amber-200 mt-1">un RPG del desarrollo humano</p>
-    <p class="opacity-70 text-sm mt-2 max-w-md mx-auto">Derrota a los monstruos teóricos de Papalia, gira la ruleta de un Freud arrepentido y escala el ranking de tu generación.</p>
+    <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-3" style="background:linear-gradient(160deg,var(--sage),var(--sage-deep));color:#fff;box-shadow:var(--shadow)"><i class="fa-solid fa-brain text-4xl"></i></div>
+    <div class="chip mx-auto mb-3" style="background:var(--surface);border:1px solid var(--line);color:var(--sage-deep)"><i class="fa-solid fa-brain"></i> El Mundo del Psicólogo</div>
+    <h1 class="font-rpg text-3xl sm:text-4xl font-extrabold grad-text leading-tight">Viaje por el<br>Ciclo Vital</h1>
+    <p class="font-freud text-xl text-amber-200 mt-1">un RPG de la psicología del desarrollo</p>
+    <p class="opacity-70 text-sm mt-2 max-w-md mx-auto">Estudia con flashcards, enfréntate a los retos teóricos de Papalia, gira la ruleta de Freud y escala el ranking de tu generación.</p>
   </div>
 
   <div class="glass rounded-3xl p-5 mt-3 max-w-md mx-auto">
-    <h2 class="font-rpg font-bold text-lg mb-1"><i class="fa-solid fa-id-card text-violet-300"></i> Inscríbete a la travesía</h2>
-    <p class="text-xs opacity-70 mb-4">Tu correo es tu pasaporte: guarda tu progreso y te coloca en el ranking. Pronto añadiremos más clases (bloques).</p>
+    <h2 class="font-rpg font-bold text-lg mb-1"><i class="fa-solid fa-id-card text-violet-300"></i> Regístrate para empezar</h2>
+    <p class="text-xs opacity-70 mb-4">Tu correo es tu pasaporte: guarda tu progreso y te coloca en el ranking. Cada mes se abre un nuevo trimestre.</p>
 
     <label class="block text-xs font-bold mb-1 opacity-80">Nombre de héroe / apodo</label>
-    <input id="inName" maxlength="22" placeholder="Ej. Lic. Sinapsis" class="w-full rounded-xl px-4 py-3 mb-3 text-tinta font-bold" style="color:var(--tinta)">
+    <input id="inName" maxlength="22" placeholder="Ej. Lic. Sinapsis" class="w-full rounded-xl px-4 py-3 mb-3 font-bold" style="color:var(--ink);background:var(--surface);border:1.5px solid var(--line)">
 
     <label class="block text-xs font-bold mb-1 opacity-80">Correo electrónico</label>
-    <input id="inMail" type="email" placeholder="tucorreo@gmail.com" class="w-full rounded-xl px-4 py-3 mb-2" style="color:var(--tinta)">
+    <input id="inMail" type="email" placeholder="tucorreo@gmail.com" class="w-full rounded-xl px-4 py-3 mb-2" style="color:var(--ink);background:var(--surface);border:1.5px solid var(--line)">
     <p id="loginErr" class="text-rose-300 text-xs h-4 mb-1"></p>
 
     <button onclick="register()" class="grad-btn btn w-full py-3 text-lg mt-1">
@@ -225,22 +258,34 @@
 <!-- ================= MAPA ================= -->
 <section id="s-map" class="screen pt-14">
   <div class="text-center mt-2 mb-4">
-    <h2 class="font-rpg text-2xl font-black grad-text">El Sendero del Desarrollo</h2>
-    <p class="font-freud text-xl text-amber-200" id="mapSub">cuatro etapas, cuatro bestias del inconsciente</p>
+    <h2 class="font-rpg text-2xl font-extrabold grad-text">El Sendero del Desarrollo</h2>
+    <p class="font-freud text-xl text-amber-200" id="mapSub">cuatro etapas del ciclo vital humano</p>
   </div>
-  <div id="replayBanner" class="hidden glass rounded-3xl p-4 mb-4 text-center border border-amber-300/30"><div class="text-3xl mb-1">🎓</div><div class="font-rpg font-black text-lg grad-text">¡Completaste el ciclo vital!</div><div class="text-xs opacity-80 mt-1">Modo repaso libre: toca cualquier etapa para volver a estudiarla o batirte de nuevo.</div></div>
+
+  <div id="trimTabs" class="trim-tabs mb-4"></div>
+
+  <div id="trimLocked" class="hidden glass rounded-3xl p-6 text-center">
+    <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-3" style="background:var(--surface2);color:var(--sage-deep);border:1px solid var(--line)"><i class="fa-solid fa-lock text-xl"></i></div>
+    <div class="font-rpg font-bold text-lg">Trimestre 5 · próximamente</div>
+    <div class="text-sm opacity-75 mt-1 max-w-sm mx-auto">Estoy subiendo el contenido de este trimestre. Vuelve pronto para desbloquear sus etapas.</div>
+  </div>
+
+  <div id="replayBanner" class="hidden glass rounded-3xl p-4 mb-4 text-center border border-amber-300/30"><div class="text-2xl mb-1" style="color:var(--gold)"><i class="fa-solid fa-award"></i></div><div class="font-rpg font-bold text-lg grad-text">¡Completaste el ciclo vital!</div><div class="text-xs opacity-80 mt-1">Modo repaso libre: toca cualquier etapa para volver a estudiarla o repasar de nuevo.</div></div>
   <div id="levelPath" class="space-y-4"></div>
 
-  <div class="repaso-card rounded-3xl p-4 mt-6 flex items-center gap-4" onclick="startReview()">
-    <div class="rc-hat shrink-0">🎩</div>
+  <div id="repasoCard" class="repaso-card rounded-3xl p-4 mt-6 flex items-center gap-4" onclick="startReview()">
+    <i class="fa-solid fa-couch rc-hat shrink-0"></i>
     <div class="flex-1 min-w-0">
-      <div class="font-rpg font-black text-lg grad-text leading-tight">⚡ REPASO FINAL</div>
+      <div class="font-rpg font-bold text-lg grad-text leading-tight"><i class="fa-solid fa-bolt" style="color:var(--gold)"></i> Repaso final</div>
       <div class="text-xs opacity-85">Enfréntate a <b>Sigmund Freud</b> en su diván. 10 preguntas mezcladas de los 4 niveles, dificultad sorpresa.</div>
     </div>
-    <div class="shrink-0 text-2xl text-amber-300"><i class="fa-solid fa-couch"></i></div>
+    <div class="shrink-0 text-2xl" style="color:var(--sage-deep)"><i class="fa-solid fa-chevron-right"></i></div>
   </div>
 
   <div class="grid grid-cols-2 gap-3 mt-6">
+    <button onclick="showLibrary()" class="glass btn py-3 rounded-2xl col-span-2">
+      <i class="fa-solid fa-book-open-reader text-amber-300"></i> Biblioteca
+    </button>
     <button onclick="showLeaderboard()" class="glass btn py-3 rounded-2xl">
       <i class="fa-solid fa-ranking-star text-amber-300"></i> Ranking
     </button>
@@ -299,8 +344,8 @@
 
   <div id="arena" class="arena mb-3">
     <div class="floor"></div>
-    <div id="hero" class="fighter hero">🎓</div>
-    <div id="monster" class="fighter monster">👾</div>
+    <div id="hero" class="fighter hero"><i class="fa-solid fa-user-graduate"></i></div>
+    <div id="monster" class="fighter monster"><i class="fa-solid fa-brain"></i></div>
   </div>
 
   <!-- inventario -->
@@ -310,7 +355,7 @@
   <div class="card-parch rounded-2xl p-4 shadow-xl">
     <div class="flex items-center gap-2 mb-2">
       <span id="qDiff" class="chip" style="background:var(--noche2); color:#fff"></span>
-      <span class="text-xs font-bold" style="color:#6b21a8">Pregunta <span id="qNum"></span></span>
+      <span class="text-xs font-bold" style="color:var(--sage-deep)">Pregunta <span id="qNum"></span></span>
     </div>
     <p id="qText" class="font-extrabold text-lg leading-snug mb-3" style="color:var(--tinta)"></p>
     <div id="qOpts" class="grid gap-2"></div>
@@ -328,11 +373,57 @@
 <!-- ================= RANKING ================= -->
 <section id="s-rank" class="screen pt-14">
   <div class="text-center mt-2 mb-4">
-    <div class="text-5xl">🏆</div>
-    <h2 class="font-rpg text-2xl font-black grad-text">Salón de la Fama</h2>
+    <div class="text-4xl" style="color:var(--gold)"><i class="fa-solid fa-trophy"></i></div>
+    <h2 class="font-rpg text-2xl font-extrabold grad-text mt-1">Salón de la Fama</h2>
     <p class="font-freud text-xl text-amber-200">los egos mejor sublimados</p>
   </div>
   <div id="rankList" class="space-y-2"></div>
+  <button onclick="goMap()" class="block mx-auto mt-6 text-sm opacity-70 underline">← Volver al sendero</button>
+</section>
+
+<!-- ================= BIBLIOTECA ================= -->
+<section id="s-library" class="screen pt-14">
+  <div class="text-center mt-2 mb-4">
+    <div class="text-4xl" style="color:var(--sage-deep)"><i class="fa-solid fa-book-open-reader"></i></div>
+    <h2 class="font-rpg text-2xl font-extrabold grad-text mt-1">Biblioteca</h2>
+    <p class="font-freud text-xl text-amber-200">material de consulta del psicólogo</p>
+  </div>
+
+  <!-- Drive embebido -->
+  <div class="glass rounded-3xl p-4 mb-5">
+    <div class="flex items-center justify-between gap-2 mb-3">
+      <h3 class="font-rpg font-bold text-base"><i class="fa-brands fa-google-drive" style="color:var(--sage-deep)"></i> Biblioteca pública</h3>
+      <a href="https://drive.google.com/drive/folders/1E4dZOnjj6A3Kdk_FUK98oF3uH4IzIVVz" target="_blank" rel="noopener" class="chip" style="background:var(--surface2);border:1px solid var(--line);color:var(--sage-deep)"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir en Drive</a>
+    </div>
+    <div class="rounded-2xl overflow-hidden" style="border:1px solid var(--line);background:#fff">
+      <iframe src="https://drive.google.com/embeddedfolderview?id=1E4dZOnjj6A3Kdk_FUK98oF3uH4IzIVVz#grid"
+        style="width:100%;height:420px;border:0;display:block" loading="lazy" title="Biblioteca pública en Google Drive"></iframe>
+    </div>
+    <p class="text-[11px] opacity-60 mt-2">Si la vista no carga, la carpeta debe estar compartida como “cualquiera con el enlace”. Usa “Abrir en Drive”.</p>
+  </div>
+
+  <!-- Enlaces de interés -->
+  <div class="flex items-center justify-between gap-2 mb-3">
+    <h3 class="font-rpg font-bold text-lg"><i class="fa-solid fa-link" style="color:var(--sage-deep)"></i> Enlaces de interés</h3>
+    <button onclick="toggleLinkForm()" class="chip grad-btn"><i class="fa-solid fa-plus"></i> Agregar</button>
+  </div>
+
+  <!-- Formulario agregar enlace -->
+  <div id="linkForm" class="hidden glass rounded-2xl p-4 mb-4">
+    <label class="block text-xs font-bold mb-1 opacity-80">Título</label>
+    <input id="linkTitle" maxlength="80" placeholder="Ej. Artículo sobre pensamiento posformal" class="w-full rounded-xl px-3 py-2 mb-2" style="color:var(--ink);background:var(--surface);border:1.5px solid var(--line)">
+    <label class="block text-xs font-bold mb-1 opacity-80">Enlace (URL)</label>
+    <input id="linkUrl" type="url" placeholder="https://…" class="w-full rounded-xl px-3 py-2 mb-1" style="color:var(--ink);background:var(--surface);border:1.5px solid var(--line)">
+    <p id="linkErr" class="text-rose-300 text-xs h-4 mb-1"></p>
+    <div class="grid grid-cols-2 gap-2">
+      <button onclick="toggleLinkForm()" class="glass btn py-2 rounded-xl text-sm">Cancelar</button>
+      <button onclick="addLink()" class="grad-btn btn py-2 rounded-xl text-sm"><i class="fa-solid fa-check"></i> Guardar</button>
+    </div>
+    <p class="text-[11px] opacity-60 mt-2">Los enlaces que agregues aquí se guardan en este navegador.</p>
+  </div>
+
+  <div id="linkList" class="grid gap-3"></div>
+
   <button onclick="goMap()" class="block mx-auto mt-6 text-sm opacity-70 underline">← Volver al sendero</button>
 </section>
 
@@ -341,14 +432,14 @@
 <!-- ================= MODAL RULETA ================= -->
 <div id="rouletteModal" class="modal">
   <div class="modal-box glass scrollbar-thin p-5 text-center">
-    <div class="text-4xl mb-1">🛋️</div>
-    <h3 class="font-rpg text-xl font-black grad-text">La Ruleta de Sigmund</h3>
+    <div class="text-3xl mb-1" style="color:var(--sage-deep)"><i class="fa-solid fa-couch"></i></div>
+    <h3 class="font-rpg text-xl font-extrabold grad-text">La Ruleta de Sigmund</h3>
     <p class="font-freud text-amber-200 text-lg mb-3">"El azar es solo represión con buen marketing."</p>
 
     <div class="wheel-wrap mb-4">
       <div class="wheel-pointer"><i class="fa-solid fa-caret-down"></i></div>
       <div id="wheel" class="wheel"></div>
-      <div class="wheel-hub">🧠</div>
+      <div class="wheel-hub"><i class="fa-solid fa-brain"></i></div>
     </div>
 
     <button id="spinBtn" onclick="spinWheel()" class="grad-btn btn w-full py-3 rounded-xl text-lg pulse-ring">
@@ -357,7 +448,7 @@
 
     <div id="spinResult" class="hidden mt-4 card-parch rounded-2xl p-4 text-left" style="color:var(--tinta)">
       <p id="spinPrize" class="font-extrabold text-lg"></p>
-      <p id="spinFreud" class="font-freud text-xl mt-1" style="color:#7c2d6b"></p>
+      <p id="spinFreud" class="font-freud text-xl mt-1" style="color:var(--sage-deep)"></p>
       <button onclick="closeRoulette()" class="grad-btn btn w-full py-3 mt-3 rounded-xl text-white">Continuar la travesía</button>
     </div>
   </div>
@@ -366,8 +457,8 @@
 <!-- ================= MODAL FIN DE NIVEL ================= -->
 <div id="endModal" class="modal">
   <div class="modal-box glass p-6 text-center">
-    <div id="endIcon" class="text-6xl mb-2">🎉</div>
-    <h3 id="endTitle" class="font-rpg text-2xl font-black grad-text mb-1"></h3>
+    <div id="endIcon" class="text-5xl mb-2" style="color:var(--gold)"><i class="fa-solid fa-trophy"></i></div>
+    <h3 id="endTitle" class="font-rpg text-2xl font-extrabold grad-text mb-1"></h3>
     <p id="endMsg" class="opacity-90 mb-2"></p>
     <p id="endFreud" class="font-freud text-amber-200 text-xl mb-4"></p>
     <div class="card-parch rounded-2xl p-3 mb-4" style="color:var(--tinta)">
@@ -591,20 +682,20 @@ BANK.n4.push(
 
 /* ============ DEFINICIÓN DE NIVELES ============ */
 const LEVELS = [
-  { id:"n1", emoji:"🌅", titulo:"Juventud Tardía", rango:"21–29 años",
-    monstruo:"El Espectro del Aislamiento", monIcon:"🕸️",
+  { id:"n1", emoji:"fa-person-walking", titulo:"Juventud Tardía", rango:"21–29 años",
+    monstruo:"El Espectro del Aislamiento", monIcon:"fa-user-slash",
     color:"from-orange-400 to-amber-500",
     intro:"Intimidad vs. aislamiento. Identidad, pensamiento posformal y salud en su pico." },
-  { id:"n2", emoji:"🌗", titulo:"Adultez Intermedia", rango:"40–65 años",
-    monstruo:"El Coloso del Estancamiento", monIcon:"🗿",
+  { id:"n2", emoji:"fa-briefcase", titulo:"Adultez Intermedia", rango:"40–65 años",
+    monstruo:"El Coloso del Estancamiento", monIcon:"fa-anchor",
     color:"from-stone-400 to-amber-700",
     intro:"Generatividad vs. estancamiento. Menopausia, generación sándwich y pericia experta." },
-  { id:"n3", emoji:"🌌", titulo:"Adultez Tardía", rango:"65+ años",
-    monstruo:"La Sombra del Ocaso", monIcon:"👻",
+  { id:"n3", emoji:"fa-person-cane", titulo:"Adultez Tardía", rango:"65+ años",
+    monstruo:"La Sombra del Ocaso", monIcon:"fa-moon",
     color:"from-fuchsia-400 to-purple-600",
     intro:"Integridad vs. desesperación. Envejecimiento exitoso, sabiduría y teorías del retiro." },
-  { id:"n4", emoji:"🕯️", titulo:"Conceptos de Muerte", rango:"El final del ciclo",
-    monstruo:"El Guardián del Umbral", monIcon:"💀",
+  { id:"n4", emoji:"fa-dove", titulo:"Conceptos de Muerte", rango:"El final del ciclo",
+    monstruo:"El Guardián del Umbral", monIcon:"fa-hourglass-end",
     color:"from-slate-400 to-indigo-700",
     intro:"Muerte, duelo y sentido. Kübler-Ross, Worden, Yalom, tanatología y cuidados paliativos." }
 ];
@@ -731,7 +822,7 @@ async function showLeaderboard(){
     rows = JSON.parse(localStorage.getItem('vcv_rank')||'[]').sort((a,b)=>b.puntaje-a.puntaje);
   }
   if(!rows.length){ list.innerHTML='<p class="text-center opacity-60 py-6">Aún nadie ha pisado el diván. Sé el primero.</p>'; return; }
-  const medals=['🥇','🥈','🥉'];
+  const medals=['<i class="fa-solid fa-medal" style="color:#b3893f"></i>','<i class="fa-solid fa-medal" style="color:#9aa39c"></i>','<i class="fa-solid fa-medal" style="color:#c17e63"></i>'];
   list.innerHTML = rows.map((r,i)=>{
     const me = player && r.email===player.mail;
     return `<div class="glass rounded-2xl p-3 flex items-center gap-3 ${me?'ring-2 ring-amber-300':''}">
@@ -744,30 +835,102 @@ async function showLeaderboard(){
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 /* =====================================================
+   BIBLIOTECA · Drive + enlaces de interés
+   ===================================================== */
+/* Enlaces curados: edítalos aquí para que los vean todos.
+   Formato: { titulo:"…", url:"https://…" } */
+const LINKS = [
+  // { titulo:"APA · Psicología del desarrollo", url:"https://www.apa.org/" },
+];
+function showLibrary(){ renderLinks(); showScreen('s-library'); }
+function getUserLinks(){ try{ return JSON.parse(localStorage.getItem('vcv_links')||'[]'); }catch(e){ return []; } }
+function saveUserLinks(a){ localStorage.setItem('vcv_links', JSON.stringify(a)); }
+function toggleLinkForm(){
+  const f=$('linkForm'); f.classList.toggle('hidden'); $('linkErr').textContent='';
+  if(!f.classList.contains('hidden')) $('linkTitle').focus();
+}
+function addLink(){
+  const t=$('linkTitle').value.trim(); let u=$('linkUrl').value.trim();
+  if(t.length<2){ $('linkErr').textContent='Escribe un título.'; return; }
+  if(!/^https?:\/\//i.test(u)){
+    if(u && !/\s/.test(u)) u='https://'+u;
+    else { $('linkErr').textContent='Escribe un enlace válido.'; return; }
+  }
+  const arr=getUserLinks(); arr.push({ titulo:t, url:u }); saveUserLinks(arr);
+  $('linkTitle').value=''; $('linkUrl').value=''; toggleLinkForm(); renderLinks();
+}
+function removeLink(i){ const arr=getUserLinks(); arr.splice(i,1); saveUserLinks(arr); renderLinks(); }
+function hostOf(u){ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return u; } }
+function renderLinks(){
+  const wrap=$('linkList'); if(!wrap) return;
+  const cur = LINKS.map(l=>({ ...l, _cur:true }));
+  const all = cur.concat(getUserLinks().map((l,idx)=>({ ...l, _i:idx })));
+  if(!all.length){
+    wrap.innerHTML='<div class="glass rounded-2xl p-5 text-center text-sm opacity-70">Aún no hay enlaces. Usa “Agregar” para sumar recursos de interés.</div>';
+    return;
+  }
+  wrap.innerHTML = all.map(l=>`
+    <div class="glass rounded-2xl p-3 flex items-center gap-3">
+      <div class="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center" style="background:var(--surface2);color:var(--sage-deep);border:1px solid var(--line)"><i class="fa-solid fa-link"></i></div>
+      <a href="${escapeHtml(l.url)}" target="_blank" rel="noopener" class="flex-1 min-w-0">
+        <div class="font-bold truncate">${escapeHtml(l.titulo)}</div>
+        <div class="text-[11px] opacity-60 truncate">${escapeHtml(hostOf(l.url))}</div>
+      </a>
+      ${l._cur?'':`<button onclick="removeLink(${l._i})" class="shrink-0 opt !min-h-0 px-2 py-2 rounded-lg text-sm" title="Eliminar"><i class="fa-solid fa-trash-can" style="color:var(--mal)"></i></button>`}
+    </div>`).join('');
+}
+
+/* =====================================================
    MAPA DE NIVELES
    ===================================================== */
+/* ============ TRIMESTRES ============ */
+const TRIMESTRES = [
+  { id:'t4', num:4, nombre:'El Mundo del Psicólogo', activo:true },
+  { id:'t5', num:5, nombre:'Próximamente',      activo:false }
+];
+let selTrim = 't4';
+function renderTrimTabs(){
+  const tabs=$('trimTabs'); if(!tabs) return;
+  tabs.innerHTML = TRIMESTRES.map(t=>{
+    const active=t.id===selTrim, locked=!t.activo;
+    return `<div class="trim-tab ${active?'active':''} ${locked?'locked':''}" ${locked?'':`onclick="selectTrim('${t.id}')"`}>
+      <div class="tt-k">Trimestre ${t.num}</div>
+      <div class="tt-n">${t.nombre} ${locked?'<i class="fa-solid fa-lock text-xs opacity-60"></i>':''}</div>
+    </div>`;
+  }).join('');
+}
+function selectTrim(id){ selTrim=id; buildMap(); }
+
 function buildMap(){
+  renderTrimTabs();
+  const trim = TRIMESTRES.find(t=>t.id===selTrim);
+  const locked = !!(trim && !trim.activo);
+  $('trimLocked').classList.toggle('hidden', !locked);
+  ['levelPath','repasoCard'].forEach(id=>{ const el=$(id); if(el) el.classList.toggle('hidden', locked); });
   const path=$('levelPath');
+  if(locked){ $('replayBanner').classList.add('hidden'); path.innerHTML=''; return; }
   path.innerHTML = LEVELS.map((lv,i)=>{
     const unlocked = i < nivelMax;
     const best = progress[lv.id];
     const done = best!==undefined;
     return `<button onclick="${unlocked?`openLevel('${lv.id}')`:'shakeLocked(this)'}"
       class="node w-full text-left glass rounded-3xl p-4 flex items-center gap-4 ${unlocked?'':'locked'}">
-      <div class="text-4xl shrink-0">${unlocked?lv.emoji:'🔒'}</div>
+      <div class="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-xl" style="background:var(--surface2);color:var(--sage-deep);border:1px solid var(--line)">
+        <i class="fa-solid ${unlocked?lv.emoji:'fa-lock'}"></i>
+      </div>
       <div class="flex-1 min-w-0">
         <div class="font-rpg font-bold text-lg leading-tight">${lv.titulo}</div>
-        <div class="text-xs opacity-70">${lv.rango} · Jefe: ${lv.monstruo}</div>
+        <div class="text-xs opacity-70">${lv.rango} · Reto: ${lv.monstruo}</div>
         ${done?`<div class="text-[11px] mt-1 text-amber-300 font-bold"><i class="fa-solid fa-star"></i> Mejor: ${best} pts</div>`:''}
       </div>
-      <div class="shrink-0 text-2xl opacity-80">${unlocked?'<i class="fa-solid fa-chevron-right"></i>':''}</div>
+      <div class="shrink-0 text-xl opacity-70">${unlocked?'<i class="fa-solid fa-chevron-right"></i>':''}</div>
     </button>`;
   }).join('');
   const allDone = LEVELS.every(l=>progress[l.id]!==undefined);
   const banner=$('replayBanner');
   if(banner) banner.classList.toggle('hidden', !allDone);
   const sub=$('mapSub');
-  if(sub) sub.textContent = allDone ? 'modo repaso libre: elige la etapa que quieras dominar' : 'cuatro etapas, cuatro bestias del inconsciente';
+  if(sub) sub.textContent = allDone ? 'modo repaso libre: elige la etapa que quieras repasar' : 'cuatro etapas del ciclo vital humano';
 }
 function shakeLocked(el){ el.classList.add('hit'); setTimeout(()=>el.classList.remove('hit'),400); }
 
@@ -809,8 +972,8 @@ function startBattleFromStudy(){ startBattle(currentLevelId); }
    MODO REPASO · JEFE FINAL: SIGMUND FREUD
    ===================================================== */
 const REPASO_LV = {
-  id:"repaso", emoji:"🎩", titulo:"Repaso Final", rango:"El Diván del Inconsciente",
-  monstruo:"Sigmund Freud", monIcon:"🎩",
+  id:"repaso", emoji:"fa-couch", titulo:"Repaso Final", rango:"El Diván del Inconsciente",
+  monstruo:"Sigmund Freud", monIcon:"fa-couch",
   color:"from-amber-400 to-rose-600",
   intro:"El padre del psicoanálisis te examina sobre todo el ciclo vital."
 };
@@ -862,13 +1025,13 @@ function startReview(){
   };
   state.monMax = Math.max(5, Math.ceil(state.qs.length*0.7));
   state.monHp = state.monMax;
-  $('battleLevel').textContent = `🎩 Repaso Final`;
-  $('monName').textContent = `🎩 Sigmund Freud`;
-  $('monster').textContent = '🎩';
+  $('battleLevel').innerHTML = `<i class="fa-solid fa-couch"></i> Repaso Final`;
+  $('monName').innerHTML = `<i class="fa-solid fa-couch"></i> Sigmund Freud`;
+  $('monster').innerHTML = '<i class="fa-solid fa-couch"></i>';
   renderHearts(); renderInv(); renderMonHp();
   showScreen('s-battle');
   loadQuestion();
-  setTimeout(()=>floatText('"Recuéstese y respóndame todo." 🛋️','var(--oro)'), 350);
+  setTimeout(()=>floatText('"Recuéstese y respóndame todo."','var(--oro)'), 350);
 }
 
 
@@ -897,9 +1060,9 @@ function startBattle(id){
   };
   state.monMax = Math.max(5, Math.ceil(state.qs.length*0.7)); // aciertos necesarios para vencer al jefe
   state.monHp = state.monMax;
-  $('battleLevel').textContent = `${lv.emoji} ${lv.titulo}`;
-  $('monName').textContent = `${lv.monIcon} ${lv.monstruo}`;
-  $('monster').textContent = lv.monIcon;
+  $('battleLevel').innerHTML = `<i class="fa-solid ${lv.emoji}"></i> ${lv.titulo}`;
+  $('monName').innerHTML = `<i class="fa-solid ${lv.monIcon}"></i> ${lv.monstruo}`;
+  $('monster').innerHTML = `<i class="fa-solid ${lv.monIcon}"></i>`;
   renderHearts(); renderInv(); renderMonHp();
   showScreen('s-battle');
   loadQuestion();
@@ -910,7 +1073,7 @@ function renderHearts(){
   for(let i=0;i<MAX_LIVES;i++){
     const span=document.createElement('span');
     span.className='heart'+(state && i>=state.lives?' lost':'');
-    span.textContent='❤️';
+    span.innerHTML='<i class="fa-solid fa-heart"></i>';
     wrap.appendChild(span);
   }
 }
@@ -981,7 +1144,7 @@ function useSkip(){
   if(state.inv.skip<=0||state.answered) return;
   state.inv.skip--;
   state.answered=true;
-  floatText('¡SALTO ASTUTO! 🌀', 'var(--escudo)');
+  floatText('¡Salto astuto!', 'var(--escudo)');
   heroAttack(true);
   setTimeout(()=>{ damageMonster(); revealExplain(true,true); }, 500);
 }
@@ -1000,16 +1163,16 @@ function answer(idx, btn){
     const gain = 80 + q.d*40 + state.lives*5;
     state.score += gain; state.correct++;
     heroAttack();
-    setTimeout(()=>{ damageMonster(); floatText(`¡CRÍTICO! -${monHit()} HP 💥`,'var(--oro)'); }, 480);
+    setTimeout(()=>{ damageMonster(); floatText(`¡Acierto! -${monHit()} HP`,'var(--oro)'); }, 480);
     setTimeout(()=>revealExplain(true), 520);
   } else {
     if(state.shield){
-      floatText('¡ESCUDO ACTIVO! 🛡️','var(--escudo)');
+      floatText('¡Escudo activo!','var(--escudo)');
       setTimeout(()=>revealExplain(false), 300);
     } else {
       monsterAttack();
-      setTimeout(()=>{ loseHeart(); floatText('¡GOLPE ENEMY! -1 VIDA 💔','var(--mal)'); }, 420);
-      if(state.isReview){ setTimeout(()=>floatText(freudTaunt(),'#fbbf24'), 1000); }
+      setTimeout(()=>{ loseHeart(); floatText('Fallaste · -1 vida','var(--mal)'); }, 420);
+      if(state.isReview){ setTimeout(()=>floatText(freudTaunt(),'var(--gold)'), 1000); }
       setTimeout(()=>revealExplain(false), 520);
     }
   }
@@ -1062,11 +1225,11 @@ function nextQuestion(){
    RULETA DE SIGMUND
    ===================================================== */
 const WHEEL = [
-  { key:'vida',  label:'Vida Extra',      icon:'❤️', p:0.20, color:'#ef4444' },
-  { key:'cruda', label:'La Cruda Realidad', icon:'💀', p:0.25, color:'#475569' },
-  { key:'fifty', label:'Pista 50:50',     icon:'✂️', p:0.25, color:'#d946ef' },
-  { key:'skip',  label:'Comodín Saltar',  icon:'🌀', p:0.25, color:'#8b5cf6' },
-  { key:'shield',label:'Inmunidad 5 min', icon:'🛡️', p:0.05, color:'#38bdf8' },
+  { key:'vida',  label:'Vida Extra',      icon:'<i class="fa-solid fa-heart"></i>', p:0.20, color:'#c17e63' },
+  { key:'cruda', label:'La Cruda Realidad', icon:'<i class="fa-solid fa-ban"></i>', p:0.25, color:'#8a938c' },
+  { key:'fifty', label:'Pista 50:50',     icon:'<i class="fa-solid fa-scissors"></i>', p:0.25, color:'#6f9484' },
+  { key:'skip',  label:'Comodín Saltar',  icon:'<i class="fa-solid fa-forward"></i>', p:0.25, color:'#3f5d4f' },
+  { key:'shield',label:'Inmunidad 5 min', icon:'<i class="fa-solid fa-shield-halved"></i>', p:0.05, color:'#5c8a94' },
 ];
 const FREUD_PRIZE = {
   vida:["\"Una vida extra. Tu madre te sobreprotegió y mira, funcionó.\"","\"Toma un corazón. Considéralo una compensación por todos los traumas que no te causé yo.\""],
@@ -1088,7 +1251,7 @@ function buildWheel(){
     const a = (i+0.5)*seg;
     const el=document.createElement('div');
     el.style.cssText=`position:absolute;top:50%;left:50%;transform:rotate(${a}deg) translateY(-38%);transform-origin:center;`;
-    el.innerHTML=`<div style="transform:translateX(-50%);font-size:1.4rem">${w.icon}</div>`;
+    el.innerHTML=`<div style="transform:translateX(-50%);font-size:1.4rem;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.3)">${w.icon}</div>`;
     wheel.appendChild(el);
   });
 }
@@ -1159,7 +1322,8 @@ function endBattle(victory){
   saveSession(); updateHudScore(); upsertPlayer(); buildMap();
 
   const lv=state.lv;
-  $('endIcon').textContent = victory?'🏅':'💀';
+  $('endIcon').innerHTML = victory?'<i class="fa-solid fa-trophy"></i>':'<i class="fa-solid fa-face-frown"></i>';
+  $('endIcon').style.color = victory?'var(--gold)':'var(--muted)';
   $('endTitle').textContent = victory?`¡${lv.monstruo} derrotado!`:'Has caído en el diván';
   $('endMsg').textContent = victory
     ? `Superaste ${lv.titulo}. ${progress[state.id]===finalScore?'¡Nuevo récord!':''}`
