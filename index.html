@@ -682,19 +682,19 @@ BANK.n4.push(
 
 /* ============ DEFINICIÓN DE NIVELES ============ */
 const LEVELS = [
-  { id:"n1", emoji:"fa-person-walking", titulo:"Juventud Tardía", rango:"21–29 años",
+  { id:"n1", trim:"t4", emoji:"fa-person-walking", titulo:"Juventud Tardía", rango:"21–29 años",
     monstruo:"El Espectro del Aislamiento", monIcon:"fa-user-slash",
     color:"from-orange-400 to-amber-500",
     intro:"Intimidad vs. aislamiento. Identidad, pensamiento posformal y salud en su pico." },
-  { id:"n2", emoji:"fa-briefcase", titulo:"Adultez Intermedia", rango:"40–65 años",
+  { id:"n2", trim:"t4", emoji:"fa-briefcase", titulo:"Adultez Intermedia", rango:"40–65 años",
     monstruo:"El Coloso del Estancamiento", monIcon:"fa-anchor",
     color:"from-stone-400 to-amber-700",
     intro:"Generatividad vs. estancamiento. Menopausia, generación sándwich y pericia experta." },
-  { id:"n3", emoji:"fa-person-cane", titulo:"Adultez Tardía", rango:"65+ años",
+  { id:"n3", trim:"t4", emoji:"fa-person-cane", titulo:"Adultez Tardía", rango:"65+ años",
     monstruo:"La Sombra del Ocaso", monIcon:"fa-moon",
     color:"from-fuchsia-400 to-purple-600",
     intro:"Integridad vs. desesperación. Envejecimiento exitoso, sabiduría y teorías del retiro." },
-  { id:"n4", emoji:"fa-dove", titulo:"Conceptos de Muerte", rango:"El final del ciclo",
+  { id:"n4", trim:"t4", emoji:"fa-dove", titulo:"Conceptos de Muerte", rango:"El final del ciclo",
     monstruo:"El Guardián del Umbral", monIcon:"fa-hourglass-end",
     color:"from-slate-400 to-indigo-700",
     intro:"Muerte, duelo y sentido. Kübler-Ross, Worden, Yalom, tanatología y cuidados paliativos." }
@@ -706,7 +706,13 @@ const MAX_LIVES = 10;
 /* ============ ESTADO ============ */
 let player = null;          // {name, mail}
 let progress = {};          // {n1:bestScore,...}
-let nivelMax = 1;            // niveles permitidos (lo controla el admin en Supabase)
+let nivelMax = 1;            // (compat) niveles permitidos globales
+let acceso = {};             // acceso por trimestre, ej. {t4:4, t5:0} (lo controla el admin)
+function accesoFor(trim){
+  if(acceso && acceso[trim]!=null) return acceso[trim];
+  if(trim==='t4') return nivelMax;   // compatibilidad con nivel_max antiguo
+  return 0;
+}
 let state = null;           // estado de batalla en curso
 
 /* ============ FRASES DE FREUD (mapa / ambiente) ============ */
@@ -746,15 +752,16 @@ async function loadSession(){
 }
 // Trae progreso y nivel_max desde Supabase (el admin manda)
 async function loadProfile(){
-  if(!sb){ nivelMax = LEVELS.length; return; }   // sin Supabase: todo abierto localmente
+  if(!sb){ nivelMax = LEVELS.length; acceso = { t4:LEVELS.length, t5:LEVELS.length }; return; }
   try{
     const { data } = await sb.from('ranking_ciclo_vital')
-      .select('progreso,nivel_max').eq('email', player.mail).maybeSingle();
+      .select('progreso,nivel_max,acceso').eq('email', player.mail).maybeSingle();
     if(data){
       if(data.progreso) progress = { ...progress, ...data.progreso };
       nivelMax = (data.nivel_max==null) ? 1 : data.nivel_max;
-    } else { nivelMax = 1; }
-  }catch(e){ console.warn(e); nivelMax = 1; }
+      acceso = (data.acceso && typeof data.acceso==='object') ? data.acceso : { t4: nivelMax };
+    } else { nivelMax = 1; acceso = { t4:1 }; }
+  }catch(e){ console.warn(e); nivelMax = 1; acceso = { t4:1 }; }
 }
 function saveSession(){
   localStorage.setItem('vcv_player', JSON.stringify(player));
@@ -942,8 +949,11 @@ function buildMap(){
   ['levelPath','repasoCard'].forEach(id=>{ const el=$(id); if(el) el.classList.toggle('hidden', locked); });
   const path=$('levelPath');
   if(locked){ $('replayBanner').classList.add('hidden'); path.innerHTML=''; return; }
-  path.innerHTML = LEVELS.map((lv,i)=>{
-    const unlocked = i < nivelMax;
+  const levs = LEVELS.filter(l=>l.trim===selTrim);
+  const cupo = accesoFor(selTrim);
+  if(!levs.length){ $('replayBanner').classList.add('hidden'); path.innerHTML='<div class=\'glass rounded-3xl p-5 text-center text-sm opacity-70\'>Aún no hay niveles en este trimestre. Muy pronto.</div>'; return; }
+  path.innerHTML = levs.map((lv,i)=>{
+    const unlocked = i < cupo;
     const best = progress[lv.id];
     const done = best!==undefined;
     return `<button onclick="${unlocked?`openLevel('${lv.id}')`:'shakeLocked(this)'}"
@@ -959,11 +969,11 @@ function buildMap(){
       <div class="shrink-0 text-xl opacity-70">${unlocked?'<i class="fa-solid fa-chevron-right"></i>':''}</div>
     </button>`;
   }).join('');
-  const allDone = LEVELS.every(l=>progress[l.id]!==undefined);
+  const allDone = levs.every(l=>progress[l.id]!==undefined);
   const banner=$('replayBanner');
   if(banner) banner.classList.toggle('hidden', !allDone);
   const sub=$('mapSub');
-  if(sub) sub.textContent = allDone ? 'modo repaso libre: elige la etapa que quieras repasar' : 'cuatro etapas del ciclo vital humano';
+  if(sub) sub.textContent = allDone ? 'modo repaso libre: elige la etapa que quieras repasar' : 'etapas del ciclo vital humano';
 }
 function shakeLocked(el){ el.classList.add('hit'); setTimeout(()=>el.classList.remove('hit'),400); }
 
@@ -1026,7 +1036,7 @@ function freudTaunt(){ return FREUD_TAUNTS[Math.floor(Math.random()*FREUD_TAUNTS
 
 // 10 preguntas: máx 3 por bloque, dificultad variada (orden mezclado, no ascendente)
 function pickReviewQuestions(){
-  const ids=['n1','n2','n3','n4'].filter(id=>BANK[id] && BANK[id].length);
+  const ids=LEVELS.filter(l=>l.trim===selTrim).map(l=>l.id).filter(id=>BANK[id] && BANK[id].length);
   const counts={}; ids.forEach(id=>counts[id]=1);          // mínimo 1 por bloque
   let restantes=10-ids.length;
   // repartir el resto al azar, tope 3 por bloque
